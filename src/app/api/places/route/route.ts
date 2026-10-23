@@ -1,5 +1,6 @@
 import type { WalkingRoute, WalkingStep } from "@/lib/places/route-types";
 import type { Coordinates } from "@/lib/places/types";
+import { consumeRateLimit } from "@/lib/security/request";
 
 export const runtime = "nodejs";
 
@@ -76,6 +77,8 @@ async function fetchRoute(from: Coordinates, to: Coordinates): Promise<WalkingRo
 }
 
 export async function GET(request: Request): Promise<Response> {
+  const retryAfter = consumeRateLimit(request, "places:route", 40, 60_000);
+  if (retryAfter) return error("Bạn đang gửi quá nhiều yêu cầu. Hãy thử lại sau.", 429, retryAfter);
   const params = new URL(request.url).searchParams;
   const from = { latitude: numberParam(params.get("fromLat")), longitude: numberParam(params.get("fromLon")) };
   const to = { latitude: numberParam(params.get("toLat")), longitude: numberParam(params.get("toLon")) };

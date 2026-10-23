@@ -2,6 +2,7 @@ import { queryDateSpots, queryPhotonDateSpots } from "@/lib/places/date-spots";
 import { distanceInMeters } from "@/lib/places/overpass";
 import type { DateSpot } from "@/lib/places/date-plan";
 import type { Coordinates } from "@/lib/places/types";
+import { consumeRateLimit } from "@/lib/security/request";
 
 export const runtime = "nodejs";
 
@@ -40,6 +41,8 @@ function error(message: string, status: number, retryAfter?: number): Response {
 }
 
 export async function GET(request: Request): Promise<Response> {
+  const retryAfter = consumeRateLimit(request, "places:date-spots", 20, 60_000);
+  if (retryAfter) return error("Bạn đang gửi quá nhiều yêu cầu. Hãy thử lại sau.", 429, retryAfter);
   const params = new URL(request.url).searchParams;
   const lat = Number(params.get("lat"));
   const lon = Number(params.get("lon"));

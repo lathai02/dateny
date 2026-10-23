@@ -8,7 +8,9 @@ import {
   Search, Sparkles, Store, UsersRound, X, type LucideIcon,
 } from "lucide-react";
 import { GlassButton, GlassPanel, SegmentedControl } from "@/components/design-system";
+import { AuthControl } from "@/components/auth-control";
 import { ModeSelector } from "@/components/mode-selector";
+import { PlaceReviews } from "@/components/place-reviews";
 import type { NearbyMapProps } from "@/components/nearby-map";
 import type { WalkingRoute } from "@/lib/places/route-types";
 import type { DateSpot } from "@/lib/places/date-plan";
@@ -221,7 +223,7 @@ export default function Home({ initialMode = null }: { initialMode?: Mode | null
   useEffect(() => {
     if (initialMode === null || !coordinates || hasCoverage) return;
     const controller = new AbortController();
-    const timer = window.setTimeout(async () => {
+    const loadPlaces = async () => {
       setRequestState("loading");
       setRequestError("");
       const params = new URLSearchParams({
@@ -257,8 +259,9 @@ export default function Home({ initialMode = null }: { initialMode?: Mode | null
         setRequestError(error instanceof Error ? error.message : "Chưa tải được địa điểm.");
         setRequestState("error");
       }
-    }, 350);
-    return () => { window.clearTimeout(timer); controller.abort(); };
+    };
+    void loadPlaces();
+    return () => controller.abort();
   }, [centerKey, coordinates, hasCoverage, initialMode, radiusMeters, retryKey]);
 
   useEffect(() => {
@@ -335,7 +338,7 @@ export default function Home({ initialMode = null }: { initialMode?: Mode | null
       <main className={`discovery-gate theme-${initialMode}`}>
         <header className="app-nav">
           <Link className="app-logo" href="/" aria-label="Về trang chọn chế độ"><span className="logo-mark">D</span><span className="logo-word">Dateny</span></Link>
-          <Link className="mode-pill" href="/" aria-label="Đổi kiểu đi chơi"><ArrowLeft size={17} aria-hidden="true" /><span>{activeMode.label}</span></Link>
+          <div className="nav-actions"><AuthControl /><Link className="mode-pill" href="/" aria-label="Đổi kiểu đi chơi"><ArrowLeft size={17} aria-hidden="true" /><span>{activeMode.label}</span></Link></div>
         </header>
         <section className="gate-content" role={hasError ? "alert" : "status"}>
           <span className="gate-indicator" aria-hidden="true">{hasError ? <MapPin size={28} /> : <span className="loading-dot" />}</span>
@@ -501,7 +504,7 @@ export default function Home({ initialMode = null }: { initialMode?: Mode | null
     <main className={`discovery-page theme-${initialMode}`}>
       <header className="app-nav">
         <Link className="app-logo" href="/" aria-label="Về trang chọn chế độ"><span className="logo-mark">D</span><span className="logo-word">Dateny</span></Link>
-        <Link className="mode-pill" href="/" aria-label="Đổi kiểu đi chơi"><ArrowLeft size={17} aria-hidden="true" /><span>{activeMode.label}</span></Link>
+        <div className="nav-actions"><AuthControl /><Link className="mode-pill" href="/" aria-label="Đổi kiểu đi chơi"><ArrowLeft size={17} aria-hidden="true" /><span>{activeMode.label}</span></Link></div>
       </header>
 
       <section className="hero-section">
@@ -583,7 +586,7 @@ export default function Home({ initialMode = null }: { initialMode?: Mode | null
                 )}
               </div>
             )}
-            <p className="data-credit">Dữ liệu địa điểm: © OpenStreetMap contributors{hasCoverage && results?.source === "photon" ? " · qua Photon" : ""}.</p>
+            <p className="data-credit">Dữ liệu địa điểm: © OpenStreetMap contributors{hasCoverage && results?.source !== "overpass" ? ` · qua ${results?.source === "geoapify" ? "Geoapify" : "Photon"}` : ""}.</p>
           </>
         )}
         {!coordinates && location.status !== "loading" && (
@@ -596,17 +599,24 @@ export default function Home({ initialMode = null }: { initialMode?: Mode | null
         <div className="modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) setDetailPlace(null); }}>
           <section className="result-modal place-detail-modal" role="dialog" aria-modal="true" aria-labelledby="result-title" key={detailPlace.id}>
             <button className="modal-close" onClick={() => setDetailPlace(null)} aria-label="Đóng"><X size={20} aria-hidden="true" /></button>
-            <span className="overline">{categoryLabels[detailPlace.category]}</span>
-            <h2 id="result-title">{detailPlace.name}</h2>
-            <div className="modal-meta"><span><MapPin size={15} aria-hidden="true" />{formatDistance(detailPlace.distanceMeters)}</span></div>
-            {detailPlace.address && <p><strong>Địa chỉ</strong><span>{detailPlace.address}</span></p>}
-            {detailPlace.cuisine && <p><strong>Ẩm thực</strong><span>{detailPlace.cuisine.replaceAll(";", ", ")}</span></p>}
-            {detailPlace.openingHours && <p><strong>Giờ mở cửa</strong><span>{detailPlace.openingHours}</span></p>}
-            {detailPlace.website && <p><strong>Website</strong><a href={detailPlace.website} target="_blank" rel="noopener noreferrer">{detailPlace.website}</a></p>}
+            <header className="place-detail-hero">
+              <span className="overline">{categoryLabels[detailPlace.category]}</span>
+              <h2 id="result-title">{detailPlace.name}</h2>
+              <div className="modal-meta"><span><MapPin size={14} aria-hidden="true" />{formatDistance(detailPlace.distanceMeters)}</span></div>
+            </header>
+            {(detailPlace.address || detailPlace.cuisine || detailPlace.openingHours || detailPlace.website) && (
+              <div className="place-facts">
+                {detailPlace.address && <p><strong>Địa chỉ</strong><span>{detailPlace.address}</span></p>}
+                {detailPlace.cuisine && <p><strong>Ẩm thực</strong><span>{detailPlace.cuisine.replaceAll(";", ", ")}</span></p>}
+                {detailPlace.openingHours && <p><strong>Giờ mở cửa</strong><span>{detailPlace.openingHours}</span></p>}
+                {detailPlace.website && <p><strong>Website</strong><a href={detailPlace.website} target="_blank" rel="noopener noreferrer">{detailPlace.website}</a></p>}
+              </div>
+            )}
             <div className="modal-actions">
               {coordinates && <DirectionsButton place={detailPlace} onClick={() => startDirections(detailPlace)} className="primary modal-directions" label="Xem đường đi" />}
               <button onClick={openSurprise}><Gift size={17} aria-hidden="true" /> Bốc túi mù</button>
             </div>
+            <PlaceReviews place={detailPlace} />
           </section>
         </div>
       )}

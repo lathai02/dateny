@@ -16,8 +16,8 @@ type PhotonFeature = {
 type PhotonResponse = { features?: unknown };
 
 const DEFAULT_ENDPOINT = "https://photon.komoot.io/reverse";
-const TIMEOUT_MS = 8_000;
-const MAX_RESPONSE_BYTES = 750_000;
+const TIMEOUT_MS = 4_000;
+const MAX_RESPONSE_BYTES = 1_500_000;
 const OSM_TYPES: Record<string, OsmElementType> = { N: "node", W: "way", R: "relation" };
 
 function nonEmpty(value: unknown): string | undefined {
@@ -106,7 +106,9 @@ export async function queryPhoton(
   url.searchParams.set("lat", String(center.latitude));
   url.searchParams.set("lon", String(center.longitude));
   url.searchParams.set("radius", String(radiusMeters / 1_000));
-  url.searchParams.set("limit", "50");
+  // A larger single response keeps category filters useful in dense city centres
+  // without requiring extra public-server requests.
+  url.searchParams.set("limit", "120");
   for (const item of category === "all" ? PLACE_CATEGORIES : [category]) {
     url.searchParams.append("osm_tag", `amenity:${item}`);
   }

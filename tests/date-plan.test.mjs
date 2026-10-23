@@ -9,8 +9,8 @@ const modules = new Map();
 function loadTs(filename) {
   const path = resolve(filename.endsWith(".ts") ? filename : `${filename}.ts`);
   if (modules.has(path)) return modules.get(path).exports;
-  const module = { exports: {} };
-  modules.set(path, module);
+  const loadedModule = { exports: {} };
+  modules.set(path, loadedModule);
   const source = readFileSync(path, "utf8");
   const code = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
   const localRequire = (specifier) => {
@@ -18,8 +18,8 @@ function loadTs(filename) {
     if (!specifier.startsWith(".")) throw new Error(`Unexpected import: ${specifier}`);
     return loadTs(resolve(dirname(path), specifier));
   };
-  new Function("require", "module", "exports", code)(localRequire, module, module.exports);
-  return module.exports;
+  new Function("require", "module", "exports", code)(localRequire, loadedModule, loadedModule.exports);
+  return loadedModule.exports;
 }
 
 const { createDatePlan } = loadTs("src/lib/places/date-plan.ts");

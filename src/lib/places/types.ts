@@ -27,6 +27,6 @@ export type NearbyPlacesResponse = {
   center: Coordinates;
   radiusMeters: number;
   category: PlaceCategoryFilter;
-  source: "overpass" | "photon";
+  source: "geoapify" | "photon" | "overpass";
   fetchedAt: string;
 };

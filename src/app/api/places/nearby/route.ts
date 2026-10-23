@@ -1,13 +1,15 @@
 import { distanceInMeters, queryOverpass } from "@/lib/places/overpass";
 import { queryPhoton } from "@/lib/places/photon";
+import { queryGeoapify } from "@/lib/places/geoapify";
 import { PLACE_CATEGORIES, type Coordinates, type NearbyPlacesResponse, type Place, type PlaceCategoryFilter } from "@/lib/places/types";
+import { consumeRateLimit } from "@/lib/security/request";
 
 export const runtime = "nodejs";
 
 const MIN_RADIUS_METERS = 250;
 const MAX_RADIUS_METERS = 5_000;
-const CACHE_TTL_MS = 5 * 60_000;
-const MIN_UPSTREAM_GAP_MS = 1_500;
+const CACHE_TTL_MS = 15 * 60_000;
+const MIN_UPSTREAM_GAP_MS = 300;
 const MAX_CACHE_ENTRIES = 80;
 
 type LookupResult = { places: Place[]; source: NearbyPlacesResponse["source"] };
@@ -16,21 +18,45 @@ const cache = new Map<string, CacheEntry>();
 const inFlight = new Map<string, Promise<LookupResult>>();
 let lastUpstreamStart = 0;
 let overpassBackoffUntil = 0;
+let photonBackoffUntil = 0;
+let geoapifyBackoffUntil = 0;
 
 async function queryPlaces(
   center: Coordinates,
   radiusMeters: number,
   category: PlaceCategoryFilter,
 ): Promise<LookupResult> {
+  if (process.env.GEOAPIFY_API_KEY?.trim() && Date.now() >= geoapifyBackoffUntil) {
+    try {
+      const places = await queryGeoapify(center, radiusMeters, category);
+      if (places.length) return { places, source: "geoapify" };
+    } catch (error) {
+      geoapifyBackoffUntil = Date.now() + 30_000;
+      console.warn("Dateny: Geoapify unavailable; trying Photon", error instanceof Error ? error.message : error);
+    }
+  }
+
+  let photonPlaces: Place[] | null = null;
+  if (Date.now() >= photonBackoffUntil) {
+    try {
+      photonPlaces = await queryPhoton(center, radiusMeters, category);
+      if (photonPlaces.length) return { places: photonPlaces, source: "photon" };
+    } catch (error) {
+      photonBackoffUntil = Date.now() + 30_000;
+      console.warn("Dateny: Photon unavailable; trying Overpass", error instanceof Error ? error.message : error);
+    }
+  }
+
   if (Date.now() >= overpassBackoffUntil) {
     try {
       return { places: await queryOverpass(center, radiusMeters, category), source: "overpass" };
     } catch (error) {
       overpassBackoffUntil = Date.now() + 30_000;
-      console.warn("Dateny: Overpass unavailable; trying Photon", error instanceof Error ? error.message : error);
+      console.warn("Dateny: Overpass unavailable", error instanceof Error ? error.message : error);
     }
   }
-  return { places: await queryPhoton(center, radiusMeters, category), source: "photon" };
+  if (photonPlaces) return { places: photonPlaces, source: "photon" };
+  throw new Error("All place providers are unavailable");
 }
 
 function errorResponse(message: string, status: number, retryAfter?: number): Response {
@@ -53,6 +79,8 @@ function numericParam(value: string | null): number | null {
 }
 
 export async function GET(request: Request): Promise<Response> {
+  const retryAfter = consumeRateLimit(request, "places:nearby", 30, 60_000);
+  if (retryAfter) return errorResponse("Bạn đang gửi quá nhiều yêu cầu. Hãy thử lại sau.", 429, retryAfter);
   const params = new URL(request.url).searchParams;
   const latitude = numericParam(params.get("lat"));
   const longitude = numericParam(params.get("lon"));
