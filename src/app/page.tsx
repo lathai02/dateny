@@ -280,11 +280,12 @@ function GeolocationPermissionControl({ onPosition, onError, onFallback }: {
       else if (control.error) onError(control.error);
     };
     control.addEventListener("location", handleLocation);
+    if (control.position || control.error) handleLocation();
     return () => control.removeEventListener("location", handleLocation);
   }, [onError, onPosition]);
 
   return (
-    <geolocation ref={controlRef} lang="vi" className="native-geolocation-control">
+    <geolocation ref={controlRef} lang="vi" className="native-geolocation-control" autolocate accuracymode="approximate">
       <button type="button" onClick={onFallback}><MapPin size={17} aria-hidden="true" /> Cấp quyền vị trí</button>
     </geolocation>
   );
@@ -413,6 +414,17 @@ export default function Home({ initialMode = null }: { initialMode?: Mode | null
       { enableHighAccuracy: false, timeout: 10_000, maximumAge: 5 * 60_000 },
     );
   }, []);
+
+  useEffect(() => {
+    if (initialMode === null || "HTMLGeolocationElement" in window || !navigator.permissions) return;
+    let active = true;
+    void navigator.permissions.query({ name: "geolocation" }).then((permission) => {
+      if (active && permission.state === "granted") requestLocation();
+    }).catch(() => {
+      // Browsers without geolocation permission queries keep the manual fallback button.
+    });
+    return () => { active = false; };
+  }, [initialMode, requestLocation]);
 
   const acceptBrowserLocation = useCallback((position: GeolocationPosition) => {
     setLocation({
