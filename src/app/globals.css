@@ -461,11 +461,8 @@ button:disabled { cursor: not-allowed; }
 .location-permission-dialog { width: min(100%, 430px); position: relative; padding: 28px; border: 1px solid rgba(255,255,255,.92); border-bottom-color: rgba(130,140,160,.24); border-radius: 29px; background: rgba(255,255,255,.94); box-shadow: 0 30px 80px rgba(17,27,45,.25), 0 5px 15px rgba(17,27,45,.1), inset 0 1px rgba(255,255,255,.98); animation: dialog-in .42s var(--ease-out) both; }
 .location-permission-dialog .modal-close { top: 18px; right: 18px; background: #eef1f5; }
 .location-permission-dialog h2 { margin: 18px 50px 8px 0; font-size: 29px; line-height: 1.1; letter-spacing: -.045em; }
-.location-permission-dialog > p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.5; }
-.location-permission-dialog .location-permission-help { margin-top: 20px; color: #3e4654; font-weight: 700; }
-.location-permission-dialog ol { margin: 9px 0 0; padding-left: 22px; color: #3e4654; font-size: 13px; line-height: 1.55; }
-.location-permission-dialog li + li { margin-top: 7px; }
 .location-permission-actions { display: grid; grid-template-columns: 1fr; gap: 9px; margin-top: 22px; }
+.location-permission-primary { padding: 3px; border: 1px solid #2463e8; border-radius: 999px; background: rgba(36,99,232,.06); }
 .location-permission-actions .native-geolocation-control { width: 100%; margin: 0; }
 .location-permission-actions .native-geolocation-control > button { width: 100%; border-color: transparent; background: var(--accent); color: #fff; }
 .location-permission-actions button { min-height: 50px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 0 18px; border: 1px solid var(--line); border-radius: 999px; background: #fff; color: var(--ink); cursor: pointer; font: inherit; font-size: 13px; font-weight: 750; transition: transform .22s var(--spring), background-color .2s; }

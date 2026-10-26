@@ -263,17 +263,12 @@ function LocationPermissionDialog({ open, onClose, onPosition, onError, onFallba
         <button className="modal-close" onClick={onClose} aria-label="Đóng"><X size={20} aria-hidden="true" /></button>
         <span className="auth-icon" aria-hidden="true"><MapPin size={25} /></span>
         <h2 id="location-permission-title">Cho phép Dateny dùng vị trí?</h2>
-        <p>Dateny dùng vị trí hiện tại để tìm quán gần bạn và không lưu lại hành trình.</p>
         <div className="location-permission-actions">
-          <GeolocationPermissionControl onPosition={onPosition} onError={onError} onFallback={onFallback} />
+          <div className="location-permission-primary">
+            <GeolocationPermissionControl onPosition={onPosition} onError={onError} onFallback={onFallback} />
+          </div>
           <button onClick={onClose}>Để sau</button>
         </div>
-        <p className="location-permission-help">Nếu bạn từng chọn “Không cho phép”, hãy bật lại theo các bước sau:</p>
-        <ol>
-          <li>Mở biểu tượng bên cạnh địa chỉ trang hoặc menu trình duyệt.</li>
-          <li>Chọn <strong>Quyền của trang</strong> hoặc <strong>Cài đặt trang</strong>.</li>
-          <li>Đổi <strong>Vị trí</strong> thành <strong>Cho phép</strong>, rồi quay lại đây.</li>
-        </ol>
       </section>
     </div>
   );
