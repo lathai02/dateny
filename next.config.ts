@@ -16,7 +16,10 @@ const nextConfig: NextConfig = {
       source: "/:path*",
       headers: [
         { key: "Content-Security-Policy", value: "frame-ancestors 'none'; base-uri 'self'; object-src 'none'" },
-        { key: "Referrer-Policy", value: "no-referrer" },
+        // OpenStreetMap's public tile service requires browser requests to carry
+        // a valid Referer. Send only the site origin across origins so map tiles
+        // can load without exposing the full page URL.
+        { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
         { key: "Permissions-Policy", value: "camera=(), microphone=(), payment=(), usb=(), geolocation=(self)" },
         { key: "X-Content-Type-Options", value: "nosniff" },
         { key: "X-Frame-Options", value: "DENY" },
