@@ -2,10 +2,10 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import {
   ArrowLeft, ArrowRight, Coffee, Gift, Heart, MapPin, Navigation, RotateCcw,
-  Search, Sparkles, Store, UsersRound, X, type LucideIcon,
+  Search, Sparkles, Store, UserRound, UsersRound, X, type LucideIcon,
 } from "lucide-react";
 import { GlassButton, GlassPanel, SegmentedControl } from "@/components/design-system";
 import { AuthControl } from "@/components/auth-control";
@@ -25,10 +25,58 @@ const DateJackpot = dynamic(() => import("@/components/date-jackpot"), { ssr: fa
 
 export type Mode = "solo" | "couple" | "friends";
 
-const modeData: Record<Mode, { label: string; title: string; icon: LucideIcon }> = {
-  solo: { label: "Một mình", title: "Một góc cho riêng mình.", icon: Coffee },
-  couple: { label: "Hẹn hò", title: "Một nơi cho hai người.", icon: Heart },
-  friends: { label: "Bạn bè", title: "Một kèo cho cả hội.", icon: UsersRound },
+const modeData: Record<Mode, { label: string; optionLabel: string; titles: string[]; icon: LucideIcon }> = {
+  solo: {
+    label: "Một mình",
+    optionLabel: "Cho riêng mình",
+    icon: UserRound,
+    titles: [
+      "Một góc riêng, đúng mood hôm nay.",
+      "Đi một mình, vui theo cách mình.",
+      "Một chỗ yên để thở chậm lại.",
+      "Hôm nay cứ chiều mình một chút.",
+      "Một chiếc bàn dành riêng cho bạn.",
+      "Chậm một nhịp, tận hưởng theo ý mình.",
+      "Quán hợp gu, thời gian thuộc về bạn.",
+      "Một mình, nhưng chẳng hề buồn.",
+      "Ghé một nơi khiến mình thấy dễ chịu.",
+      "Tự thưởng mình một buổi thật ngon.",
+    ],
+  },
+  couple: {
+    label: "Hẹn hò",
+    optionLabel: "Cho hai người",
+    icon: Heart,
+    titles: [
+      "Một nơi cho hai người, thêm chuyện để nhớ.",
+      "Hai người, một quán vừa xinh.",
+      "Chọn một chỗ để câu chuyện dài thêm.",
+      "Hẹn nhau ở một nơi thật hợp.",
+      "Một chiếc bàn, hai người, nhiều điều để kể.",
+      "Để buổi hẹn bắt đầu bằng một quán hay.",
+      "Có nhau rồi, để Dateny chọn chỗ.",
+      "Một nơi vừa đủ riêng cho hai người.",
+      "Hôm nay mình cùng đi đâu đó nhé.",
+      "Chọn đúng quán, giữ trọn mood hẹn hò.",
+    ],
+  },
+  friends: {
+    label: "Bạn bè",
+    optionLabel: "Cho cả hội",
+    icon: UsersRound,
+    titles: [
+      "Một kèo cho cả hội, vui từ lúc chọn quán.",
+      "Cả hội đã đủ, giờ chỉ thiếu quán.",
+      "Chốt kèo nhanh, vui lâu hơn.",
+      "Một chỗ rộng mood cho cả nhóm.",
+      "Hội mình đi đâu cũng vui, miễn đúng quán.",
+      "Gọi đủ bạn, để Dateny gọi tên quán.",
+      "Tụ họp thôi, quán xịn để Dateny lo.",
+      "Một chiếc bàn cho mọi câu chuyện.",
+      "Kèo này nhất định phải đi.",
+      "Bạn bè đông đủ, cuộc vui bắt đầu.",
+    ],
+  },
 };
 
 const categoryLabels: Record<PlaceCategoryFilter, string> = {
@@ -40,6 +88,45 @@ const categoryLabels: Record<PlaceCategoryFilter, string> = {
 const categories = Object.keys(categoryLabels) as PlaceCategoryFilter[];
 const radiusOptions = [1_000, 2_000, 3_000, 5_000];
 const EMPTY_PLACES: Place[] = [];
+const DESKTOP_MEDIA_QUERY = "(min-width: 720px)";
+const welcomeMessages = [
+  "Hôm nay bạn đi với ai?",
+  "Dateny biết một vài quán hay ho đó!",
+  "Quán ngon quanh đây, Dateny biết kha khá.",
+  "Để Dateny tìm một chỗ thật vừa ý nhé.",
+  "Có một quán rất hợp với hôm nay đấy.",
+  "Một chỗ ngon và đúng mood đang chờ bạn.",
+  "Dateny có vài địa chỉ rất đáng để ghé.",
+  "Chọn người đi cùng, quán hay để Dateny lo.",
+  "Hôm nay mình thử một quán mới nhé?",
+  "Gần đây có vài chỗ thú vị lắm.",
+  "Đi đâu khó, có Dateny lo!",
+  "Chọn quán khó, để Dateny lo.",
+  "Ăn gì, đi đâu? Dateny biết.",
+  "Kèo đã lên, quán để Dateny chọn.",
+  "Chưa biết ghé đâu? Có Dateny đây.",
+  "Muốn đổi gió? Để Dateny tìm chỗ.",
+  "Bạn chọn cuộc vui, Dateny chọn quán.",
+  "Không cần nghĩ lâu, mở Dateny thôi.",
+];
+
+function subscribeDesktopViewport(callback: () => void) {
+  const query = window.matchMedia(DESKTOP_MEDIA_QUERY);
+  query.addEventListener("change", callback);
+  return () => query.removeEventListener("change", callback);
+}
+
+function getDesktopViewport() {
+  return window.matchMedia(DESKTOP_MEDIA_QUERY).matches;
+}
+
+function getServerDesktopViewport() {
+  return false;
+}
+
+function randomItem<T>(items: T[]): T {
+  return items[Math.floor(Math.random() * items.length)];
+}
 
 type LocationState =
   | { status: "idle" | "loading" | "denied" | "error"; coordinates: null; message?: string }
@@ -64,6 +151,78 @@ type SurpriseState =
     poolSize: number;
   };
 
+function TypingHeadline({ text }: { text: string }) {
+  const [visibleLength, setVisibleLength] = useState(0);
+
+  useEffect(() => {
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (visibleLength >= text.length) return;
+    const delay = reduceMotion ? 0 : visibleLength === 0 ? 280 : 48;
+
+    const timer = window.setTimeout(() => {
+      setVisibleLength(reduceMotion ? text.length : (length) => Math.min(text.length, length + 1));
+    }, delay);
+
+    return () => window.clearTimeout(timer);
+  }, [text, visibleLength]);
+
+  return <h1 className="hero-title-typing" aria-label={text}>
+      <span aria-hidden="true" style={{ visibility: "hidden" }}>{text}</span>
+      <span className="typing-visible" aria-hidden="true" style={{ position: "absolute", inset: 0 }}>{text.slice(0, visibleLength)}{visibleLength < text.length && <i className="typing-cursor" />}</span>
+    </h1>
+}
+
+function RandomModeHeadline({ mode }: { mode: Mode }) {
+  const [text, setText] = useState("");
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setText(randomItem(modeData[mode].titles)), 0);
+    return () => window.clearTimeout(timer);
+  }, [mode]);
+
+  if (!text) {
+    return (
+      <h1 className="hero-title-typing" aria-hidden="true">
+        <span style={{ visibility: "hidden" }}>{modeData[mode].titles[0]}</span>
+      </h1>
+    );
+  }
+
+  return <TypingHeadline key={text} text={text} />;
+}
+
+function TypingWelcomeMessage() {
+  const [text, setText] = useState("");
+  const [visibleLength, setVisibleLength] = useState(0);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setText(randomItem(welcomeMessages)), 0);
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    if (!text || visibleLength >= text.length) return;
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const delay = reduceMotion ? 0 : visibleLength === 0 ? 240 : 38;
+    const timer = window.setTimeout(() => {
+      setVisibleLength(reduceMotion ? text.length : (length) => Math.min(text.length, length + 1));
+    }, delay);
+    return () => window.clearTimeout(timer);
+  }, [text, visibleLength]);
+
+  return (
+    <h1 id="welcome-title" className="welcome-typing-message" aria-label={text}>
+      <span className="welcome-message-placeholder" aria-hidden="true">{text || "\u00a0"}</span>
+      {text && (
+        <span className="typing-visible" aria-hidden="true">
+          {text.slice(0, visibleLength)}
+          {visibleLength < text.length && <i className="typing-cursor" />}
+        </span>
+      )}
+    </h1>
+  );
+}
+
 function ModeWelcome({ location, onRetryLocation }: { location: LocationState; onRetryLocation: () => void }) {
   const modes = Object.entries(modeData) as [Mode, (typeof modeData)[Mode]][];
   const [previewMode, setPreviewMode] = useState<Mode>("solo");
@@ -79,9 +238,11 @@ function ModeWelcome({ location, onRetryLocation }: { location: LocationState; o
             <GlassButton variant="soft" onClick={onRetryLocation}>Thử lại</GlassButton>
           </GlassPanel>
         )}
-        <div className="welcome-heading"><h1 id="welcome-title">Đi cùng ai?</h1></div>
+        <div className="welcome-heading">
+          <TypingWelcomeMessage />
+        </div>
         <div className="mode-stage">
-          <ModeSelector options={modes.map(([id, item]) => ({ id, label: item.label, icon: item.icon }))} selected={previewMode} onSelect={setPreviewMode} />
+          <ModeSelector options={modes.map(([id, item]) => ({ id, label: item.optionLabel, icon: item.icon }))} selected={previewMode} onSelect={setPreviewMode} />
         </div>
       </section>
     </main>
@@ -144,6 +305,7 @@ function PlaceCard({
 }
 
 export default function Home({ initialMode = null }: { initialMode?: Mode | null }) {
+  const isDesktopViewport = useSyncExternalStore(subscribeDesktopViewport, getDesktopViewport, getServerDesktopViewport);
   const [location, setLocation] = useState<LocationState>({ status: "idle", coordinates: null });
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<PlaceCategoryFilter>("all");
@@ -165,9 +327,7 @@ export default function Home({ initialMode = null }: { initialMode?: Mode | null
   const [favorites, setFavorites] = useState<string[]>([]);
   const [hasEnteredDiscovery, setHasEnteredDiscovery] = useState(false);
   const mapSectionRef = useRef<HTMLDivElement>(null);
-  const placeGridRef = useRef<HTMLDivElement>(null);
   const autoLocationRequestedRef = useRef(false);
-  const hasScrolledToPlacesRef = useRef(false);
   const lastSurpriseIdRef = useRef<string | null>(null);
   const revealTimerRef = useRef<number | null>(null);
   const routeControllerRef = useRef<AbortController | null>(null);
@@ -214,12 +374,6 @@ export default function Home({ initialMode = null }: { initialMode?: Mode | null
     autoLocationRequestedRef.current = true;
     requestLocation();
   }, [requestLocation]);
-
-  useEffect(() => {
-    if (!hasEnteredDiscovery || hasScrolledToPlacesRef.current) return;
-    hasScrolledToPlacesRef.current = true;
-    requestAnimationFrame(() => placeGridRef.current?.scrollIntoView({ behavior: "instant", block: "start" }));
-  }, [hasEnteredDiscovery]);
 
   useEffect(() => {
     if (initialMode === null || !coordinates || hasCoverage) return;
@@ -449,7 +603,7 @@ export default function Home({ initialMode = null }: { initialMode?: Mode | null
     const choices = pool.length > 1
       ? pool.filter((place) => place.id !== lastSurpriseIdRef.current)
       : pool;
-    const place = choices[Math.floor(Math.random() * choices.length)];
+    const place = randomItem(choices);
     lastSurpriseIdRef.current = place.id;
     if (revealTimerRef.current !== null) window.clearTimeout(revealTimerRef.current);
     revealTimerRef.current = null;
@@ -467,7 +621,7 @@ export default function Home({ initialMode = null }: { initialMode?: Mode | null
     let previousId = place.id;
     for (let index = 0; index < total - 1; index++) {
       const candidates = pool.filter((candidate) => candidate.id !== previousId);
-      const preview = candidates[Math.floor(Math.random() * candidates.length)];
+      const preview = randomItem(candidates);
       frames.push(preview);
       previousId = preview.id;
     }
@@ -513,19 +667,24 @@ export default function Home({ initialMode = null }: { initialMode?: Mode | null
 
       <section className="hero-section">
         <div className="hero-copy">
-          <span className="hero-mode"><ActiveIcon size={18} aria-hidden="true" />{activeMode.label}</span>
-          <h1>{activeMode.title}</h1>
+          <div className="hero-copy-main">
+            <span className="hero-mode"><ActiveIcon size={18} aria-hidden="true" />{activeMode.label}</span>
+            <RandomModeHeadline key={initialMode} mode={initialMode} />
+          </div>
+          {isDesktopViewport && <aside className="hero-slogan" aria-label={`${surpriseBasePlaces.length} quán gần bạn. Để Dateny chọn giúp.`}>
+            <p className="hero-slogan-count"><strong>{surpriseBasePlaces.length}</strong><span>quán gần bạn</span></p>
+            <h2>Khỏi nghĩ lâu.<br />Để Dateny chọn giúp.</h2>
+          </aside>}
           <div className="hero-actions">
             <button className="pick-button pick-button--desktop" onClick={openSurprise} disabled={surpriseBasePlaces.length === 0}><Gift size={19} aria-hidden="true" /><span>Bốc một quán</span><ArrowRight size={19} aria-hidden="true" /></button>
             {initialMode === "couple" && <button className="date-action date-action--desktop" onClick={() => setDateJackpotOpen(true)} disabled={!coordinates || !hasCoverage}><Sparkles size={19} aria-hidden="true" /><span>Bốc cả buổi hẹn</span><ArrowRight size={19} aria-hidden="true" /></button>}
           </div>
         </div>
-        <div className="hero-photo" aria-hidden="true"><span className="hero-badge">{hasCoverage ? `${filteredPlaces.length} gợi ý` : "Khám phá quanh bạn"}</span></div>
       </section>
 
       <section className="explore-section" aria-labelledby="explore-title">
         <div className="explore-head">
-          <div><span className="overline">KHÁM PHÁ</span><h2 id="explore-title">Quanh đây</h2></div>
+          <div><h2 id="explore-title">Quanh đây</h2></div>
         </div>
         {(location.status === "denied" || location.status === "error") && (
           <p className="location-alert" role="alert">{location.message}</p>
@@ -571,7 +730,7 @@ export default function Home({ initialMode = null }: { initialMode?: Mode | null
             )}
 
             {hasCoverage && (
-              <div className="place-grid" ref={placeGridRef}>
+              <div className="place-grid">
                 {filteredPlaces.map((place, index) => (
                   <PlaceCard
                     key={place.id}
@@ -641,7 +800,7 @@ export default function Home({ initialMode = null }: { initialMode?: Mode | null
               </div>
             ) : surprise.phase === "spinning" ? (
               <div className="surprise-spinning" role="status" aria-label="Đang quay chọn quán">
-                <span className="overline">TÚI MÙ DATENY</span>
+                <span className="overline">Túi mù Dateny</span>
                 <h2 id="surprise-title">Đang chọn quán…</h2>
                 <div className="spin-window" aria-hidden="true">
                   <div className="spin-place" key={`${surprise.step}-${surprise.previewPlace.id}`}>
@@ -655,7 +814,7 @@ export default function Home({ initialMode = null }: { initialMode?: Mode | null
             ) : (
               <div className="surprise-revealed" aria-live="polite">
                 <span className="surprise-reveal-icon" aria-hidden="true">{surprise.place.category === "cafe" ? <Coffee size={28} /> : <Store size={28} />}</span>
-                <span className="overline">TÚI MÙ ĐÃ MỞ</span>
+                <span className="overline">Túi mù đã mở</span>
                 <h2 id="surprise-title" tabIndex={-1}>{surprise.place.name}</h2>
                 <p className="surprise-place-meta">{categoryLabels[surprise.place.category]} · {formatDistance(surprise.place.distanceMeters)}</p>
                 {surprise.place.address && <p className="surprise-place-address">{surprise.place.address}</p>}

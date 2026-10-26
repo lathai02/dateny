@@ -179,7 +179,7 @@ export function PlaceReviews({ place }: { place: Place }) {
   return (
     <section className="reviews-section" aria-labelledby="reviews-title">
       <div className="reviews-heading">
-        <div><span className="overline">CỘNG ĐỒNG</span><h3 id="reviews-title">Đánh giá quán</h3></div>
+        <div><span className="overline">Cộng đồng</span><h3 id="reviews-title">Đánh giá quán</h3></div>
         <div className="rating-summary" aria-label={data.averageRating ? `${data.averageRating} trên 5 sao` : "Chưa có đánh giá"}>
           <Star size={19} fill="currentColor" aria-hidden="true" />
           <strong>{data.averageRating ?? "—"}</strong><span>({data.reviewCount})</span>

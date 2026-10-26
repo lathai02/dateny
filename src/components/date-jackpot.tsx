@@ -14,17 +14,22 @@ type Props = {
   onDirections: (place: Place | DateSpot) => void;
 };
 
-const durationOptions: Array<{ value: DateDuration; label: string }> = [
-  { value: "short", label: "3 giờ" }, { value: "long", label: "5 giờ" }, { value: "overnight", label: "Qua đêm" },
+type DurationChoice = DateDuration | "custom";
+type BudgetChoice = DateBudget | "custom";
+
+const durationOptions: Array<{ value: DurationChoice; label: string }> = [
+  { value: "short", label: "3 giờ" }, { value: "long", label: "5 giờ" }, { value: "overnight", label: "Qua đêm" }, { value: "custom", label: "Tự nhập" },
 ];
-const budgetOptions: Array<{ value: DateBudget; label: string }> = [
-  { value: "light", label: "Tiết kiệm" }, { value: "balanced", label: "Vừa phải" }, { value: "flexible", label: "Linh hoạt" },
+const budgetOptions: Array<{ value: BudgetChoice; label: string }> = [
+  { value: "light", label: "Tiết kiệm" }, { value: "balanced", label: "Vừa phải" }, { value: "flexible", label: "Linh hoạt" }, { value: "custom", label: "Tự nhập" },
 ];
 const reelLabels = ["ĂN", "CHƠI", "KẾT"] as const;
 
 export default function DateJackpot({ origin, foodPlaces, radiusMeters, onClose, onDirections }: Props) {
-  const [duration, setDuration] = useState<DateDuration>("long");
-  const [budget, setBudget] = useState<DateBudget>("balanced");
+  const [durationChoice, setDurationChoice] = useState<DurationChoice>("long");
+  const [budgetChoice, setBudgetChoice] = useState<BudgetChoice>("balanced");
+  const [customHours, setCustomHours] = useState(6);
+  const [customBudgetThousands, setCustomBudgetThousands] = useState(500);
   const [spots, setSpots] = useState<DateSpot[] | null>(null);
   const [loadState, setLoadState] = useState<"loading" | "ready" | "error">("loading");
   const [loadError, setLoadError] = useState("");
@@ -86,9 +91,18 @@ export default function DateJackpot({ origin, foodPlaces, radiusMeters, onClose,
   useEffect(() => () => { timerRef.current.forEach(window.clearTimeout); timerRef.current = []; }, []);
   useEffect(() => { if (phase === "result") titleRef.current?.focus(); }, [phase]);
 
-  const samplePlan = useMemo(() => spots ? createDatePlan(foodPlaces, spots, origin, duration, budget, () => 0) : null,
-    [foodPlaces, spots, origin, duration, budget]);
-  const canSpin = loadState === "ready" && samplePlan !== null;
+  const customHoursValid = Number.isFinite(customHours) && customHours >= 1 && customHours <= 48;
+  const customBudgetValid = Number.isFinite(customBudgetThousands) && customBudgetThousands >= 50 && customBudgetThousands <= 20_000;
+  const duration: DateDuration = durationChoice === "custom"
+    ? customHours >= 12 ? "overnight" : customHours <= 4 ? "short" : "long"
+    : durationChoice;
+  const budget: DateBudget = budgetChoice === "custom"
+    ? customBudgetThousands <= 300 ? "light" : customBudgetThousands <= 800 ? "balanced" : "flexible"
+    : budgetChoice;
+  const customValuesValid = (durationChoice !== "custom" || customHoursValid) && (budgetChoice !== "custom" || customBudgetValid);
+  const samplePlan = useMemo(() => spots && customValuesValid ? createDatePlan(foodPlaces, spots, origin, duration, budget, () => 0) : null,
+    [foodPlaces, spots, origin, duration, budget, customValuesValid]);
+  const canSpin = loadState === "ready" && customValuesValid && samplePlan !== null;
 
   function spin() {
     if (!spots || !canSpin) return;
@@ -128,15 +142,17 @@ export default function DateJackpot({ origin, foodPlaces, radiusMeters, onClose,
     <div className="modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
       <section ref={dialogRef} className="result-modal date-jackpot" role="dialog" aria-modal="true" aria-labelledby="date-jackpot-title">
         <button ref={closeRef} className="modal-close" onClick={onClose} aria-label="Đóng kế hoạch hẹn"><X size={20} /></button>
-        <span className="date-jackpot-eyebrow"><Sparkles size={15} /> DATENY DATE</span>
+        <span className="date-jackpot-eyebrow"><Sparkles size={15} /> Hẹn hò cùng Dateny</span>
         <h2 id="date-jackpot-title" ref={titleRef} tabIndex={-1}>{phase === "result" ? "Kèo hẹn của hai bạn" : "Bốc cả buổi hẹn"}</h2>
         {phase === "setup" && <>
           <p className="date-jackpot-intro">Ba ô quay. Một buổi hẹn bất ngờ.</p>
           <div className="date-jackpot-options">
-            <label>THỜI GIAN</label>
-            <SegmentedControl label="Thời gian buổi hẹn" options={durationOptions} value={duration} onChange={setDuration} />
-            <label>NGÂN SÁCH DỰ KIẾN</label>
-            <SegmentedControl label="Mức ngân sách dự kiến" options={budgetOptions} value={budget} onChange={setBudget} />
+            <label>Thời gian</label>
+            <SegmentedControl label="Thời gian buổi hẹn" options={durationOptions} value={durationChoice} onChange={setDurationChoice} />
+            {durationChoice === "custom" && <label className="date-custom-input"><span>Số giờ</span><span><input type="number" min="1" max="48" step="1" inputMode="numeric" value={Number.isFinite(customHours) ? customHours : ""} onChange={(event) => setCustomHours(event.target.valueAsNumber)} aria-describedby="custom-time-hint" /><em>giờ</em></span><small id="custom-time-hint">Từ 12 giờ trở lên sẽ bao gồm chặng lưu trú.</small></label>}
+            <label>Ngân sách dự kiến</label>
+            <SegmentedControl label="Mức ngân sách dự kiến" options={budgetOptions} value={budgetChoice} onChange={setBudgetChoice} />
+            {budgetChoice === "custom" && <label className="date-custom-input"><span>Mức chi</span><span><input type="number" min="50" max="20000" step="50" inputMode="numeric" value={Number.isFinite(customBudgetThousands) ? customBudgetThousands : ""} onChange={(event) => setCustomBudgetThousands(event.target.valueAsNumber)} aria-describedby="custom-budget-hint" /><em>nghìn đồng</em></span><small id="custom-budget-hint">Nhập từ 50 đến 20.000 nghìn đồng.</small></label>}
           </div>
           <p className="date-jackpot-note">Ngân sách là sở thích lựa chọn, không phải báo giá. Hãy kiểm tra giá và giờ mở cửa trước khi đi.</p>
         </>}

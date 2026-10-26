@@ -35,7 +35,7 @@ export function ModeSelector({ options, selected, onSelect }: {
             event.preventDefault();
             if (navigationTimer.current !== null) window.clearTimeout(navigationTimer.current);
             onSelect(id);
-            navigationTimer.current = window.setTimeout(() => router.push(`/goi-y/${id}`), 460);
+            navigationTimer.current = window.setTimeout(() => router.push(`/goi-y/${id}`, { scroll: true }), 460);
           }}>
           <span className="mode-icon"><Icon size={23} strokeWidth={1.9} aria-hidden="true" /></span>
           <span className="mode-copy"><strong className="mode-label">{label}</strong></span>
