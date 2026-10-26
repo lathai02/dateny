@@ -249,26 +249,63 @@ function ModeWelcome({ location, onRetryLocation }: { location: LocationState; o
   );
 }
 
-function LocationPermissionDialog({ open, onClose, onRetry }: { open: boolean; onClose: () => void; onRetry: () => void }) {
+function LocationPermissionDialog({ open, onClose, onPosition, onError, onFallback }: {
+  open: boolean;
+  onClose: () => void;
+  onPosition: (position: GeolocationPosition) => void;
+  onError: (error: GeolocationPositionError) => void;
+  onFallback: () => void;
+}) {
   if (!open) return null;
   return (
     <div className="modal-backdrop location-permission-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
       <section className="location-permission-dialog" role="dialog" aria-modal="true" aria-labelledby="location-permission-title">
         <button className="modal-close" onClick={onClose} aria-label="Đóng"><X size={20} aria-hidden="true" /></button>
         <span className="auth-icon" aria-hidden="true"><MapPin size={25} /></span>
-        <h2 id="location-permission-title">Bật quyền vị trí</h2>
-        <p>Trình duyệt đang chặn vị trí của Dateny. Bạn chỉ cần bật lại quyền cho trang này.</p>
+        <h2 id="location-permission-title">Cho phép Dateny dùng vị trí?</h2>
+        <p>Dateny dùng vị trí hiện tại để tìm quán gần bạn và không lưu lại hành trình.</p>
+        <div className="location-permission-actions">
+          <GeolocationPermissionControl onPosition={onPosition} onError={onError} onFallback={onFallback} />
+          <button onClick={onClose}>Để sau</button>
+        </div>
+        <p className="location-permission-help">Nếu bạn từng chọn “Không cho phép”, hãy bật lại theo các bước sau:</p>
         <ol>
           <li>Mở biểu tượng bên cạnh địa chỉ trang hoặc menu trình duyệt.</li>
           <li>Chọn <strong>Quyền của trang</strong> hoặc <strong>Cài đặt trang</strong>.</li>
           <li>Đổi <strong>Vị trí</strong> thành <strong>Cho phép</strong>, rồi quay lại đây.</li>
         </ol>
-        <div className="location-permission-actions">
-          <button className="primary" onClick={onRetry}><MapPin size={18} aria-hidden="true" /> Tôi đã bật, thử lại</button>
-          <button onClick={onClose}>Để sau</button>
-        </div>
       </section>
     </div>
+  );
+}
+
+type BrowserGeolocationElement = HTMLElement & {
+  position?: GeolocationPosition | null;
+  error?: GeolocationPositionError | null;
+};
+
+function GeolocationPermissionControl({ onPosition, onError, onFallback }: {
+  onPosition: (position: GeolocationPosition) => void;
+  onError: (error: GeolocationPositionError) => void;
+  onFallback: () => void;
+}) {
+  const controlRef = useRef<BrowserGeolocationElement | null>(null);
+
+  useEffect(() => {
+    const control = controlRef.current;
+    if (!control) return;
+    const handleLocation = () => {
+      if (control.position) onPosition(control.position);
+      else if (control.error) onError(control.error);
+    };
+    control.addEventListener("location", handleLocation);
+    return () => control.removeEventListener("location", handleLocation);
+  }, [onError, onPosition]);
+
+  return (
+    <geolocation ref={controlRef} lang="vi" className="native-geolocation-control">
+      <button type="button" onClick={onFallback}><MapPin size={17} aria-hidden="true" /> Cấp quyền vị trí</button>
+    </geolocation>
   );
 }
 
@@ -351,7 +388,6 @@ export default function Home({ initialMode = null }: { initialMode?: Mode | null
   const [favorites, setFavorites] = useState<string[]>([]);
   const [hasEnteredDiscovery, setHasEnteredDiscovery] = useState(false);
   const mapSectionRef = useRef<HTMLDivElement>(null);
-  const autoLocationRequestedRef = useRef(false);
   const lastSurpriseIdRef = useRef<string | null>(null);
   const revealTimerRef = useRef<number | null>(null);
   const routeControllerRef = useRef<AbortController | null>(null);
@@ -400,11 +436,23 @@ export default function Home({ initialMode = null }: { initialMode?: Mode | null
     );
   }, []);
 
-  useEffect(() => {
-    if (autoLocationRequestedRef.current) return;
-    autoLocationRequestedRef.current = true;
-    requestLocation(false);
-  }, [requestLocation]);
+  const acceptBrowserLocation = useCallback((position: GeolocationPosition) => {
+    setLocationHelpOpen(false);
+    setLocation({
+      status: "ready",
+      coordinates: { latitude: position.coords.latitude, longitude: position.coords.longitude },
+    });
+  }, []);
+
+  const rejectBrowserLocation = useCallback((error: GeolocationPositionError) => {
+    setLocation({
+      status: error.code === 1 ? "denied" : "error",
+      coordinates: null,
+      message: error.code === 1
+        ? "Quyền vị trí chưa được bật. Bấm lại để chọn Cho phép."
+        : error.code === 3 ? "Hết thời gian lấy vị trí. Thử lại nhé." : "Không lấy được vị trí. Thử lại nhé.",
+    });
+  }, []);
 
   useEffect(() => {
     if (initialMode === null || !coordinates || hasCoverage) return;
@@ -514,14 +562,13 @@ export default function Home({ initialMode = null }: { initialMode?: Mode | null
     <LocationPermissionDialog
       open={locationHelpOpen}
       onClose={() => setLocationHelpOpen(false)}
-      onRetry={() => {
-        setLocationHelpOpen(false);
-        requestLocation(true);
-      }}
+      onPosition={acceptBrowserLocation}
+      onError={rejectBrowserLocation}
+      onFallback={() => requestLocation(false)}
     />
   );
 
-  if (initialMode === null) return <><ModeWelcome location={location} onRetryLocation={() => requestLocation(true)} />{locationPermissionDialog}</>;
+  if (initialMode === null) return <><ModeWelcome location={location} onRetryLocation={() => setLocationHelpOpen(true)} />{locationPermissionDialog}</>;
   const activeMode = modeData[initialMode];
   const ActiveIcon = activeMode.icon;
 
@@ -529,7 +576,8 @@ export default function Home({ initialMode = null }: { initialMode?: Mode | null
     const locationFailed = location.status === "denied" || location.status === "error";
     const loadFailed = requestState === "error";
     const hasError = locationFailed || loadFailed;
-    const findingLocation = location.status === "idle" || location.status === "loading";
+    const needsLocationPermission = location.status === "idle" || location.status === "denied";
+    const findingLocation = location.status === "loading";
     return (
       <>
         <main className={`discovery-gate theme-${initialMode}`}>
@@ -540,12 +588,15 @@ export default function Home({ initialMode = null }: { initialMode?: Mode | null
           <section className="gate-content" role={hasError ? "alert" : "status"}>
             <span className="gate-indicator" aria-hidden="true">{hasError ? <MapPin size={28} /> : <span className="loading-dot" />}</span>
             <span className="overline">{activeMode.label}</span>
-            <h1>{location.status === "denied" ? "Cần quyền vị trí" : hasError ? "Chưa tìm được quán" : findingLocation ? "Đang lấy vị trí…" : "Đang tìm quán…"}</h1>
-            <p>{locationFailed ? location.message : loadFailed ? requestError : findingLocation ? "Cho phép vị trí để xem quán gần bạn." : "Một chút nhé, Dateny đang tìm quanh bạn."}</p>
-            {hasError && (
-              <GlassButton variant="primary" className="gate-retry" onClick={locationFailed ? () => requestLocation(true) : () => { setRequestState("loading"); setRetryKey((current) => current + 1); }}>
-                {location.status === "denied" ? <MapPin size={17} aria-hidden="true" /> : <RotateCcw size={17} aria-hidden="true" />}
-                {location.status === "denied" ? "Cấp quyền vị trí" : "Thử lại"}
+            <h1>{needsLocationPermission ? "Cần quyền vị trí" : hasError ? "Chưa tìm được quán" : findingLocation ? "Đang lấy vị trí…" : "Đang tìm quán…"}</h1>
+            <p>{location.status === "idle" ? "Bấm nút bên dưới để chọn cấp quyền vị trí cho Dateny." : locationFailed ? location.message : loadFailed ? requestError : findingLocation ? "Đang chờ vị trí từ thiết bị của bạn." : "Một chút nhé, Dateny đang tìm quanh bạn."}</p>
+            {needsLocationPermission ? (
+              <GlassButton variant="primary" className="gate-retry" onClick={() => setLocationHelpOpen(true)}>
+                <MapPin size={17} aria-hidden="true" /> Cấp quyền vị trí
+              </GlassButton>
+            ) : hasError && (
+              <GlassButton variant="primary" className="gate-retry" onClick={() => { setRequestState("loading"); setRetryKey((current) => current + 1); }}>
+                <RotateCcw size={17} aria-hidden="true" /> Thử lại
               </GlassButton>
             )}
           </section>
@@ -799,7 +850,11 @@ export default function Home({ initialMode = null }: { initialMode?: Mode | null
           </>
         )}
         {!coordinates && location.status !== "loading" && (
-          <div className="location-empty"><Navigation size={28} aria-hidden="true" /><p>Cho phép vị trí để xem quán thật gần bạn.</p><button onClick={() => requestLocation(true)}>{location.status === "denied" ? "Cấp quyền vị trí" : "Tìm quán quanh tôi"}</button></div>
+          <div className="location-empty">
+            <Navigation size={28} aria-hidden="true" />
+            <p>Cho phép vị trí để xem quán thật gần bạn.</p>
+            <button onClick={() => setLocationHelpOpen(true)}>{location.status === "denied" ? "Cấp quyền vị trí" : "Tìm quán quanh tôi"}</button>
+          </div>
         )}
         {location.status === "loading" && <div className="location-empty" role="status"><span className="loading-dot" /><p>Đang xác định vị trí của bạn…</p></div>}
       </section>

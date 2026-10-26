@@ -141,6 +141,9 @@ button:disabled { cursor: not-allowed; }
 .gate-content h1 { margin: 12px 0 10px; font-size: clamp(27px, 7vw, 36px); line-height: 1.12; letter-spacing: -.045em; }
 .gate-content p { max-width: 360px; margin: 0; color: var(--muted); font-size: 14px; line-height: 1.5; }
 .gate-retry { min-height: 48px; margin-top: 24px; padding: 0 20px; font-size: 13px; }
+.native-geolocation-control { min-width: 190px; min-height: 48px; display: inline-block; margin-top: 24px; color: var(--accent-ink); font: inherit; font-size: 13px; font-weight: 750; color-scheme: light; }
+.native-geolocation-control > button { min-width: 190px; min-height: 48px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 0 20px; border: 0; border-radius: 999px; background: var(--accent); color: #fff; cursor: pointer; font: inherit; font-size: 13px; font-weight: 750; }
+.location-empty .native-geolocation-control { margin-top: 0; }
 
 /* Discovery keeps the primary action reachable while scrolling on phones. */
 .discovery-page { min-height: 100svh; position: relative; isolation: isolate; overflow-x: clip; padding-bottom: calc(130px + env(safe-area-inset-bottom)); background: var(--background-tint); }
@@ -459,9 +462,12 @@ button:disabled { cursor: not-allowed; }
 .location-permission-dialog .modal-close { top: 18px; right: 18px; background: #eef1f5; }
 .location-permission-dialog h2 { margin: 18px 50px 8px 0; font-size: 29px; line-height: 1.1; letter-spacing: -.045em; }
 .location-permission-dialog > p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.5; }
-.location-permission-dialog ol { margin: 18px 0 0; padding-left: 22px; color: #3e4654; font-size: 13px; line-height: 1.55; }
+.location-permission-dialog .location-permission-help { margin-top: 20px; color: #3e4654; font-weight: 700; }
+.location-permission-dialog ol { margin: 9px 0 0; padding-left: 22px; color: #3e4654; font-size: 13px; line-height: 1.55; }
 .location-permission-dialog li + li { margin-top: 7px; }
 .location-permission-actions { display: grid; grid-template-columns: 1fr; gap: 9px; margin-top: 22px; }
+.location-permission-actions .native-geolocation-control { width: 100%; margin: 0; }
+.location-permission-actions .native-geolocation-control > button { width: 100%; border-color: transparent; background: var(--accent); color: #fff; }
 .location-permission-actions button { min-height: 50px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 0 18px; border: 1px solid var(--line); border-radius: 999px; background: #fff; color: var(--ink); cursor: pointer; font: inherit; font-size: 13px; font-weight: 750; transition: transform .22s var(--spring), background-color .2s; }
 .location-permission-actions button.primary { border-color: transparent; background: var(--accent); color: #fff; }
 .location-permission-actions button:hover { transform: translateY(-2px); }
