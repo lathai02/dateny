@@ -136,13 +136,13 @@ button:disabled { cursor: not-allowed; }
 
 /* Mode selection starts location and place discovery before the list appears. */
 .discovery-gate { min-height: 100svh; padding-bottom: max(32px, env(safe-area-inset-bottom)); display: flex; flex-direction: column; background: var(--background-tint); }
-.gate-content { width: min(100% - 40px, 440px); margin: auto; padding: 28px; display: flex; flex-direction: column; align-items: flex-start; border: 1px solid var(--line); border-radius: 30px; background: #fff; box-shadow: var(--shadow-soft); animation: enter-up .4s var(--ease-out) both; }
+.gate-content { width: min(100% - 40px, 440px); margin: auto; padding: 28px; display: flex; flex-direction: column; align-items: flex-start; border: 1px solid var(--line); border-radius: 30px; background: #fff; box-shadow: var(--shadow-soft); }
 .gate-indicator { width: 58px; height: 58px; margin-bottom: 24px; display: grid; place-items: center; border-radius: 19px; background: var(--accent-soft); color: var(--accent-ink); }
 .gate-indicator .loading-dot { width: 25px; height: 25px; border-width: 3px; }
 .gate-content h1 { margin: 12px 0 10px; font-size: clamp(27px, 7vw, 36px); line-height: 1.12; letter-spacing: -.045em; }
 .gate-content p { max-width: 360px; margin: 0; color: var(--muted); font-size: 14px; line-height: 1.5; }
 .gate-retry { min-height: 48px; margin-top: 24px; padding: 0 20px; font-size: 13px; }
-.native-geolocation-control { min-width: 190px; min-height: 48px; display: inline-grid; place-items: center; margin-top: 24px; padding: 3px; border: 1px solid var(--accent); border-radius: 999px; background: color-mix(in srgb, var(--accent) 6%, transparent); color: var(--accent-ink); font: inherit; font-size: 13px; font-weight: 750; color-scheme: light; }
+.native-geolocation-control { min-width: 190px; min-height: 48px; display: inline-block; margin-top: 24px; padding: 3px; border: 1px solid var(--accent); border-radius: 999px; background: #fff; color: var(--accent-ink); font: inherit; font-size: 13px; font-weight: 750; color-scheme: light; cursor: pointer; }
 .native-geolocation-control > button { min-width: 190px; min-height: 48px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 0 20px; border: 0; border-radius: 999px; background: var(--accent); color: #fff; cursor: pointer; font: inherit; font-size: 13px; font-weight: 750; }
 .location-empty .native-geolocation-control { margin-top: 0; }
 
