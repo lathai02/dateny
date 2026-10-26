@@ -1,4 +1,4 @@
-import type { WalkingRoute, WalkingStep } from "./route-types";
+import type { TravelRoute, TravelStep } from "./route-types";
 import type { Coordinates } from "./types";
 
 const EARTH_RADIUS_METERS = 6_371_000;
@@ -33,7 +33,7 @@ function nearestPathPoint(path: Coordinates[], position: Coordinates): { along: 
   return best;
 }
 
-export function navigationProgress(route: WalkingRoute, position: Coordinates) {
+export function navigationProgress(route: TravelRoute, position: Coordinates) {
   const pathLength = route.coordinates.reduce((total, point, index) =>
     index ? total + metersBetween(route.coordinates[index - 1], point) : 0, 0);
   const nearest = nearestPathPoint(route.coordinates, position);
@@ -53,7 +53,7 @@ export function navigationProgress(route: WalkingRoute, position: Coordinates) {
   };
 }
 
-export function walkingStepText(step: WalkingStep | null): string {
+export function walkingStepText(step: TravelStep | null): string {
   if (!step) return "Tiếp tục đi tới điểm đến";
   if (step.type === "roundabout" || step.type === "rotary") return "Đi vào vòng xuyến";
   if (step.type === "exit roundabout" || step.type === "exit rotary") return "Ra khỏi vòng xuyến";

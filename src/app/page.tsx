@@ -12,7 +12,7 @@ import { AuthControl } from "@/components/auth-control";
 import { ModeSelector } from "@/components/mode-selector";
 import { PlaceReviews } from "@/components/place-reviews";
 import type { NearbyMapProps } from "@/components/nearby-map";
-import type { WalkingRoute } from "@/lib/places/route-types";
+import type { TravelMode, TravelRoute } from "@/lib/places/route-types";
 import type { DateSpot } from "@/lib/places/date-plan";
 import type { Coordinates, NearbyPlacesResponse, Place, PlaceCategoryFilter } from "@/lib/places/types";
 
@@ -25,10 +25,10 @@ const DateJackpot = dynamic(() => import("@/components/date-jackpot"), { ssr: fa
 
 export type Mode = "solo" | "couple" | "friends";
 
-const modeData: Record<Mode, { label: string; title: string; intro: string; icon: LucideIcon }> = {
-  solo: { label: "Một mình", title: "Một góc cho riêng mình.", intro: "Tìm quán ăn và cà phê quanh bạn.", icon: Coffee },
-  couple: { label: "Hẹn hò", title: "Một nơi cho hai người.", intro: "Tìm quán ăn và cà phê quanh bạn.", icon: Heart },
-  friends: { label: "Bạn bè", title: "Một kèo cho cả hội.", intro: "Tìm quán ăn và cà phê quanh bạn.", icon: UsersRound },
+const modeData: Record<Mode, { label: string; title: string; icon: LucideIcon }> = {
+  solo: { label: "Một mình", title: "Một góc cho riêng mình.", icon: Coffee },
+  couple: { label: "Hẹn hò", title: "Một nơi cho hai người.", icon: Heart },
+  friends: { label: "Bạn bè", title: "Một kèo cho cả hội.", icon: UsersRound },
 };
 
 const categoryLabels: Record<PlaceCategoryFilter, string> = {
@@ -155,7 +155,8 @@ export default function Home({ initialMode = null }: { initialMode?: Mode | null
   const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
   const [routePlace, setRoutePlace] = useState<Place | null>(null);
   const [routeStatus, setRouteStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
-  const [routeData, setRouteData] = useState<WalkingRoute | null>(null);
+  const [routeData, setRouteData] = useState<TravelRoute | null>(null);
+  const [routeMode, setRouteMode] = useState<TravelMode>("walking");
   const [routeOrigin, setRouteOrigin] = useState<Coordinates | null>(null);
   const [routeError, setRouteError] = useState("");
   const [detailPlace, setDetailPlace] = useState<Place | null>(null);
@@ -370,7 +371,7 @@ export default function Home({ initialMode = null }: { initialMode?: Mode | null
     }
   }
 
-  async function startDirections(destination: Place | DateSpot) {
+  async function startDirections(destination: Place | DateSpot, mode: TravelMode = "walking") {
     if (!coordinates) return;
     // Routing only needs name and coordinates. Keep the existing map's Place shape internally.
     const place: Place = "category" in destination ? destination : { ...destination, category: "restaurant" };
@@ -379,7 +380,7 @@ export default function Home({ initialMode = null }: { initialMode?: Mode | null
     routeControllerRef.current = controller;
     setRoutePlace(place);
     setRouteData(null);
-    setRouteOrigin(null);
+    setRouteMode(mode);
     setRouteError("");
     setRouteStatus("loading");
     setSelectedPlace(place);
@@ -387,8 +388,9 @@ export default function Home({ initialMode = null }: { initialMode?: Mode | null
     closeSurprise();
     setDateJackpotOpen(false);
     try {
-      let origin = coordinates;
-      if (navigator.geolocation) {
+      const existingOrigin = routePlace?.id === place.id ? routeOrigin : null;
+      let origin = existingOrigin ?? coordinates;
+      if (!existingOrigin && navigator.geolocation) {
         try {
           const latest = await new Promise<GeolocationPosition>((resolve, reject) => navigator.geolocation.getCurrentPosition(
             resolve, reject, { enableHighAccuracy: true, maximumAge: 10_000, timeout: 7_000 },
@@ -404,17 +406,18 @@ export default function Home({ initialMode = null }: { initialMode?: Mode | null
       const params = new URLSearchParams({
         fromLat: origin.latitude.toFixed(6), fromLon: origin.longitude.toFixed(6),
         toLat: place.latitude.toFixed(6), toLon: place.longitude.toFixed(6),
+        mode,
       });
       const response = await fetch(`/api/places/route?${params}`, { signal: controller.signal });
       const data: unknown = await response.json();
-      if (!response.ok) throw new Error(data && typeof data === "object" && "error" in data ? String(data.error) : "Chưa thể tìm đường đi bộ.");
+      if (!response.ok) throw new Error(data && typeof data === "object" && "error" in data ? String(data.error) : "Chưa thể tìm tuyến đường.");
       if (!data || typeof data !== "object" || !("coordinates" in data) || !Array.isArray(data.coordinates)) throw new Error("Dữ liệu chỉ đường không hợp lệ.");
       if (controller.signal.aborted) return;
-      setRouteData(data as WalkingRoute);
+      setRouteData(data as TravelRoute);
       setRouteStatus("ready");
     } catch (error) {
       if (controller.signal.aborted) return;
-      setRouteError(error instanceof Error ? error.message : "Chưa thể tìm đường đi bộ.");
+      setRouteError(error instanceof Error ? error.message : "Chưa thể tìm tuyến đường.");
       setRouteStatus("error");
     }
   }
@@ -424,6 +427,7 @@ export default function Home({ initialMode = null }: { initialMode?: Mode | null
     setRoutePlace(null);
     setRouteData(null);
     setRouteOrigin(null);
+    setRouteMode("walking");
     setRouteStatus("idle");
   }
 
@@ -510,7 +514,7 @@ export default function Home({ initialMode = null }: { initialMode?: Mode | null
       <section className="hero-section">
         <div className="hero-copy">
           <span className="hero-mode"><ActiveIcon size={18} aria-hidden="true" />{activeMode.label}</span>
-          <h1>{activeMode.title}</h1><p>{activeMode.intro}</p>
+          <h1>{activeMode.title}</h1>
           <div className="hero-actions">
             <button className="pick-button pick-button--desktop" onClick={openSurprise} disabled={surpriseBasePlaces.length === 0}><Gift size={19} aria-hidden="true" /><span>Bốc một quán</span><ArrowRight size={19} aria-hidden="true" /></button>
             {initialMode === "couple" && <button className="date-action date-action--desktop" onClick={() => setDateJackpotOpen(true)} disabled={!coordinates || !hasCoverage}><Sparkles size={19} aria-hidden="true" /><span>Bốc cả buổi hẹn</span><ArrowRight size={19} aria-hidden="true" /></button>}
@@ -614,7 +618,6 @@ export default function Home({ initialMode = null }: { initialMode?: Mode | null
             )}
             <div className="modal-actions">
               {coordinates && <DirectionsButton place={detailPlace} onClick={() => startDirections(detailPlace)} className="primary modal-directions" label="Xem đường đi" />}
-              <button onClick={openSurprise}><Gift size={17} aria-hidden="true" /> Bốc túi mù</button>
             </div>
             <PlaceReviews place={detailPlace} />
           </section>
@@ -665,7 +668,7 @@ export default function Home({ initialMode = null }: { initialMode?: Mode | null
           </section>
         </div>
       )}
-      {routePlace && coordinates && <RoutePreview origin={routeOrigin ?? coordinates} destination={routePlace} route={routeData} status={routeStatus} error={routeError} onRetry={() => startDirections(routePlace)} onClose={closeDirections} />}
+      {routePlace && coordinates && <RoutePreview origin={routeOrigin ?? coordinates} destination={routePlace} route={routeData} mode={routeMode} status={routeStatus} error={routeError} onModeChange={(mode) => startDirections(routePlace, mode)} onRetry={() => startDirections(routePlace, routeMode)} onClose={closeDirections} />}
       {dateJackpotOpen && coordinates && <DateJackpot origin={coordinates} foodPlaces={availablePlaces.filter((place) => place.distanceMeters <= radiusMeters)} radiusMeters={radiusMeters} onClose={() => setDateJackpotOpen(false)} onDirections={startDirections} />}
       <div className={`mobile-pick-dock ${initialMode === "couple" ? "mobile-pick-dock--couple" : ""}`}>
         <button className="pick-button pick-button--mobile" onClick={openSurprise} disabled={surpriseBasePlaces.length === 0}><Gift size={19} aria-hidden="true" /><span>{initialMode === "couple" ? "Bốc một quán" : "Bốc túi mù"}</span><ArrowRight size={19} aria-hidden="true" /></button>

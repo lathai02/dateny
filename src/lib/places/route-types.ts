@@ -1,13 +1,16 @@
 import type { Coordinates } from "./types";
 
-export type WalkingRoute = {
+export type TravelMode = "walking" | "motorcycle" | "driving";
+
+export type TravelRoute = {
+  mode: TravelMode;
   coordinates: Coordinates[];
   distanceMeters: number;
   durationSeconds: number;
-  steps: WalkingStep[];
+  steps: TravelStep[];
 };
 
-export type WalkingStep = {
+export type TravelStep = {
   location: Coordinates;
   distanceMeters: number;
   type: string;

@@ -3,14 +3,14 @@
 import { useEffect, useMemo, useRef } from "react";
 import { divIcon, type Polyline as LeafletPolyline } from "leaflet";
 import { CircleMarker, MapContainer, Marker, Polyline, Popup, TileLayer, useMap, useMapEvents, ZoomControl } from "react-leaflet";
-import type { WalkingRoute } from "@/lib/places/route-types";
+import type { TravelRoute } from "@/lib/places/route-types";
 import type { Coordinates, Place } from "@/lib/places/types";
 
 export type NearbyMapProps = {
   center: Coordinates;
   places: Place[];
   selectedPlace: Place | null;
-  route: WalkingRoute | null;
+  route: TravelRoute | null;
   onSelectPlace: (place: Place) => void;
   navigationPosition?: Coordinates;
   navigationHeading?: number | null;
@@ -26,7 +26,7 @@ const tileAttribution = additionalAttribution
   ? `${osmAttribution} | ${additionalAttribution}`
   : osmAttribution;
 
-function AnimatedWalkingRoute({ route }: { route: WalkingRoute }) {
+function AnimatedRoute({ route }: { route: TravelRoute }) {
   const polylineRef = useRef<LeafletPolyline>(null);
 
   useEffect(() => {
@@ -126,7 +126,7 @@ export default function NearbyMap({ center, places, selectedPlace, route, onSele
     >
       <TileLayer url={tileUrl} attribution={tileAttribution} maxZoom={19} />
       <ZoomControl position="bottomright" />
-      {route && <AnimatedWalkingRoute route={route} />}
+      {route && <AnimatedRoute route={route} />}
       {navigationPosition ? <Marker position={[navigationPosition.latitude, navigationPosition.longitude]} icon={userIcon}><Popup>Vị trí hiện tại</Popup></Marker> : <CircleMarker
         center={[center.latitude, center.longitude]}
         radius={19}

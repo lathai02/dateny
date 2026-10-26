@@ -200,7 +200,6 @@ export function PlaceReviews({ place }: { place: Place }) {
           ))}
         </div>
       )}
-      {loadState === "ready" && data.reviews.length === 0 && <p className="reviews-empty">Chưa có đánh giá. Hãy là người đầu tiên chia sẻ trải nghiệm.</p>}
 
       {user ? (
         <form className="review-form" onSubmit={submitReview}>

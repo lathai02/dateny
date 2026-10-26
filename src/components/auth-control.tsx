@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import type { User } from "@supabase/supabase-js";
 import { LogIn, LogOut, UserRound, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -55,7 +56,7 @@ export function AuthControl() {
         <UserRound size={17} aria-hidden="true" />
         <span>{user ? displayName(user) : "Đăng nhập"}</span>
       </button>
-      {open && (
+      {open && createPortal(
         <div className="modal-backdrop auth-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) setOpen(false); }}>
           <section className="auth-dialog" role="dialog" aria-modal="true" aria-labelledby="auth-title">
             <button className="modal-close" onClick={() => setOpen(false)} aria-label="Đóng"><X size={20} aria-hidden="true" /></button>
@@ -79,7 +80,8 @@ export function AuthControl() {
             )}
             {error && <p className="auth-error" role="alert">{error}</p>}
           </section>
-        </div>
+        </div>,
+        document.querySelector<HTMLElement>(".discovery-page, .discovery-gate") ?? document.body,
       )}
     </>
   );
