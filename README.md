@@ -57,7 +57,19 @@ Overpass/OSM is not a restaurant review service. Nearby place cards do not claim
 
 ```bash
 npm run lint
+npm run typecheck
+npm test
 npm run build
+npm run test:e2e
+npm run measure
 ```
 
 Public Photon, Overpass and OpenStreetMap tile services are best-effort resources for development and light traffic. Photon may return fewer fields than Overpass. Before a larger production launch, configure Geoapify (or another hosted places source) and a tile provider with suitable capacity. The current server cache and request spacing are per process, not shared across deployments.
+
+## Structure and older devices
+
+See [architecture and performance notes](docs/performance.md) for module boundaries, measurements, verification and limitations.
+
+`/lite` is a separate, ES5/CSS3-compatible document for older devices. iOS below 16.4 is redirected there on homepage/discovery requests. It supports location-based search, filters, random picks and external directions, but does not include sign-in, reviews or the interactive map. No location is persisted in local storage. Use `/?view=full` to explicitly request the full interface.
+
+Browser regression tests use installed Chrome by default, mock places/routes/tiles and do not call paid providers. Set `PLAYWRIGHT_CHANNEL` to another installed Playwright channel if needed. Set `PLAYWRIGHT_BASE_URL` to test an already-running local production build; otherwise Playwright starts port 3101. Screenshots/traces are ignored under `artifacts/` and `test-results/`.

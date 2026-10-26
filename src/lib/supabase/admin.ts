@@ -9,7 +9,8 @@ export const isSupabaseAdminConfigured = Boolean(
 
 export function createAdminClient() {
   const secretKey = process.env.SUPABASE_SECRET_KEY?.trim();
-  if (!supabaseUrl || !secretKey) throw new Error("Supabase server key is not configured");
+  if (!supabaseUrl || !secretKey)
+    throw new Error("Supabase server key is not configured");
   return createSupabaseClient(supabaseUrl, secretKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   });

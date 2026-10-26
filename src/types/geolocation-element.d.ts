@@ -1,7 +1,10 @@
 import type { DetailedHTMLProps, HTMLAttributes } from "react";
 
-type GeolocationElementProps = DetailedHTMLProps<HTMLAttributes<HTMLElement>, HTMLElement> & {
-  autolocate?: boolean;
+type GeolocationElementProps = DetailedHTMLProps<
+  HTMLAttributes<HTMLElement>,
+  HTMLElement
+> & {
+  autolocate?: "" | "true";
   accuracymode?: "approximate" | "precise";
   watch?: boolean;
 };

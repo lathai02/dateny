@@ -16,15 +16,17 @@ function compactCounters(now: number) {
   for (const [key, value] of counters) {
     if (value.resetAt <= now) counters.delete(key);
   }
-  while (counters.size > MAX_COUNTERS) counters.delete(counters.keys().next().value!);
+  while (counters.size > MAX_COUNTERS)
+    counters.delete(counters.keys().next().value!);
 }
 
 function requestFingerprint(request: Request): string {
-  const forwarded = request.headers.get("x-vercel-forwarded-for")
-    ?? request.headers.get("cf-connecting-ip")
-    ?? request.headers.get("x-real-ip")
-    ?? request.headers.get("x-forwarded-for")?.split(",")[0]
-    ?? "unknown";
+  const forwarded =
+    request.headers.get("x-vercel-forwarded-for") ??
+    request.headers.get("cf-connecting-ip") ??
+    request.headers.get("x-real-ip") ??
+    request.headers.get("x-forwarded-for")?.split(",")[0] ??
+    "unknown";
   return stableFingerprint(forwarded.trim().slice(0, 128));
 }
 
@@ -46,7 +48,8 @@ export function consumeRateLimit(
     counters.set(key, { count: 1, resetAt: now + windowMs });
     return null;
   }
-  if (current.count >= limit) return Math.max(1, Math.ceil((current.resetAt - now) / 1_000));
+  if (current.count >= limit)
+    return Math.max(1, Math.ceil((current.resetAt - now) / 1_000));
   current.count += 1;
   return null;
 }
@@ -58,8 +61,10 @@ export function hasSameOrigin(request: Request): boolean {
     const originUrl = new URL(origin);
     const requestUrl = new URL(request.url);
     const host = request.headers.get("host") ?? requestUrl.host;
-    return (originUrl.protocol === "https:" || originUrl.protocol === "http:")
-      && (originUrl.host === requestUrl.host || originUrl.host === host);
+    return (
+      (originUrl.protocol === "https:" || originUrl.protocol === "http:") &&
+      (originUrl.host === requestUrl.host || originUrl.host === host)
+    );
   } catch {
     return false;
   }

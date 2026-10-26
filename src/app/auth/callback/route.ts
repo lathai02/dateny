@@ -6,14 +6,18 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const code = url.searchParams.get("code");
   const requestedNext = url.searchParams.get("next") ?? "/";
-  const next = requestedNext.startsWith("/") && !requestedNext.startsWith("//") ? requestedNext : "/";
+  const next =
+    requestedNext.startsWith("/") && !requestedNext.startsWith("//")
+      ? requestedNext
+      : "/";
 
   let origin = url.origin;
   const configuredOrigin = process.env.DATENY_APP_ORIGIN?.trim();
   if (configuredOrigin) {
     try {
       const trusted = new URL(configuredOrigin);
-      if (trusted.protocol === "https:" || trusted.hostname === "localhost") origin = trusted.origin;
+      if (trusted.protocol === "https:" || trusted.hostname === "localhost")
+        origin = trusted.origin;
     } catch {
       // Ignore malformed deployment configuration instead of trusting request forwarding headers.
     }
@@ -32,4 +36,3 @@ export async function GET(request: Request) {
   }
   return NextResponse.redirect(destination);
 }
-

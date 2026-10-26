@@ -1,0 +1,349 @@
+@media (min-width: 720px) {
+  .welcome-page {
+    padding-inline: 32px;
+  }
+  .welcome-main {
+    width: min(100%, 920px);
+    margin-top: clamp(58px, 10vh, 88px);
+  }
+  .welcome-typing-message {
+    font-size: clamp(42px, 5vw, 52px);
+  }
+  .mode-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+  }
+  .mode-tile {
+    min-height: 200px;
+    height: 200px;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-end;
+    padding: 22px;
+  }
+  .mode-selection-lens {
+    width: calc((100% - 32px) / 3 + 8px);
+    height: 208px;
+  }
+  .mode-grid.selected-couple .mode-selection-lens {
+    transform: translate3d(calc(100% + 8px), 0, 0);
+  }
+  .mode-grid.selected-friends .mode-selection-lens {
+    transform: translate3d(calc(200% + 16px), 0, 0);
+  }
+  .mode-icon {
+    width: 58px;
+    height: 58px;
+    margin-bottom: auto;
+  }
+  .mode-copy {
+    flex: none;
+    padding-right: 8px;
+  }
+  .mode-label {
+    font-size: 22px;
+  }
+  .mode-arrow {
+    position: absolute;
+    right: 20px;
+    top: 24px;
+  }
+  .hero-section {
+    display: block;
+    margin-top: 26px;
+  }
+  .hero-copy {
+    min-height: 294px;
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(250px, 0.65fr);
+    grid-template-areas: "copy slogan" "actions actions";
+    align-items: center;
+    column-gap: 40px;
+    row-gap: 20px;
+    padding: 30px 32px;
+  }
+  .hero-copy-main {
+    grid-area: copy;
+  }
+  .hero-slogan {
+    grid-area: slogan;
+    display: block;
+    margin-top: 0;
+    padding: 6px 0 6px 34px;
+    border-top: 0;
+    border-left: 1px solid #dde2ea;
+    text-align: left;
+  }
+  .hero-slogan-count {
+    justify-content: flex-start;
+  }
+  .hero-actions {
+    grid-area: actions;
+    width: 100%;
+    max-width: none;
+    justify-self: stretch;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-top: 0;
+  }
+  .pick-button {
+    position: static;
+    width: fit-content;
+    min-width: 230px;
+    margin-top: auto;
+    box-shadow: none;
+  }
+  .pick-button--desktop {
+    display: grid;
+  }
+  .pick-button--mobile {
+    display: none;
+  }
+  .date-action--desktop {
+    display: grid;
+  }
+  .mobile-pick-dock {
+    display: none;
+  }
+  .hero-actions > button {
+    width: 100%;
+    height: 60px;
+    min-width: 0;
+    min-height: 60px;
+    grid-template-columns: 20px minmax(0, 1fr) 20px;
+    align-items: center;
+    gap: 8px;
+    margin-top: 0;
+    padding: 0 18px;
+  }
+  .hero-actions > button span {
+    min-width: 0;
+    text-align: center;
+  }
+  .discovery-page {
+    padding-bottom: 72px;
+  }
+  .explore-head {
+    flex-direction: row;
+    align-items: end;
+    justify-content: space-between;
+  }
+  .location-button {
+    width: auto;
+    max-width: 310px;
+  }
+  .filters {
+    display: grid;
+    grid-template-columns: minmax(240px, 1fr) auto;
+    align-items: center;
+  }
+  .category-control {
+    grid-column: 1 / -1;
+  }
+  .place-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .modal-backdrop {
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .result-modal {
+    width: min(100%, 480px);
+    max-height: calc(100svh - 48px);
+    padding: 16px 24px 24px;
+    border-radius: 28px;
+    animation: dialog-in 0.42s var(--ease-out) both;
+  }
+  .result-modal.place-detail-modal {
+    width: min(100%, 620px);
+    padding: 16px 18px 18px;
+    border-radius: 30px;
+  }
+  .result-modal.date-jackpot {
+    width: min(100%, 620px);
+    padding-top: 26px;
+  }
+  .result-modal::before {
+    display: none;
+  }
+}
+
+@media (min-width: 1020px) {
+  .welcome-main {
+    width: min(100%, 960px);
+  }
+  .mode-grid {
+    gap: 16px;
+  }
+  .mode-tile {
+    min-height: 220px;
+    height: 220px;
+  }
+  .mode-selection-lens {
+    height: 228px;
+  }
+  .hero-copy h1 {
+    font-size: 49px;
+  }
+  .place-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(22px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 430px) {
+  .auth-trigger {
+    padding-inline: 10px;
+  }
+  .auth-trigger span {
+    display: none;
+  }
+  .app-nav .mode-pill {
+    padding-inline: 11px;
+  }
+  .map-locate-button {
+    width: 48px;
+    padding: 0;
+  }
+  .map-locate-button span {
+    display: none;
+  }
+  .map-selection {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .map-selection-actions {
+    width: 100%;
+  }
+  .map-selection-actions button,
+  .map-selection-actions a {
+    flex: 1;
+  }
+  .real-place-card .place-footer {
+    gap: 8px;
+  }
+  .place-footer-actions {
+    flex: 1;
+  }
+  .place-detail-modal {
+    max-height: 92svh;
+  }
+  .place-detail-modal h2 {
+    font-size: 26px;
+  }
+  .place-facts p {
+    grid-template-columns: 70px minmax(0, 1fr);
+    gap: 8px;
+  }
+  .place-detail-modal .modal-actions button,
+  .place-detail-modal .modal-actions a {
+    padding-inline: 10px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 350px) {
+  .place-footer-actions .detail-button svg {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce), (update: slow) {
+  .glass-panel,
+  .ui-button--glass,
+  .welcome-nav,
+  .app-nav,
+  .mode-tile,
+  .map-heading,
+  .navigation-banner,
+  .navigation-map-actions button,
+  .map-shell .leaflet-control-zoom a,
+  .route-preview-header {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+  .welcome-ambient span,
+  .discovery-page::before {
+    filter: none;
+    opacity: 0.16;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .hero-actions > button {
+    animation: none !important;
+  }
+}
+/* Small touch screens get fewer composited glass layers, retaining edge
+   highlights, mode colours and shadows. Desktop retains the richer material. */
+@media (max-width: 600px) and (pointer: coarse) {
+  .glass-panel,
+  .ui-button--glass,
+  .welcome-nav,
+  .app-nav,
+  .mode-tile,
+  .map-heading,
+  .navigation-banner,
+  .navigation-map-actions button,
+  .map-shell .leaflet-control-zoom a,
+  .route-preview-header,
+  .filters,
+  .mode-selection-lens,
+  .hero-copy,
+  .mobile-pick-dock {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background-color: rgba(255, 255, 255, 0.92);
+  }
+  .welcome-page .welcome-ambient span {
+    filter: none;
+    opacity: 0.45;
+    background: radial-gradient(ellipse, var(--ambient-a), transparent 70%);
+  }
+  .discovery-page::before {
+    filter: none;
+    opacity: 0.18;
+  }
+  .hero-actions > button,
+  .mobile-pick-dock > button {
+    animation: none;
+  }
+  .mode-tile,
+  .place-card {
+    will-change: auto;
+  }
+}
+
+.load-more {
+  display: block;
+  min-height: 44px;
+  margin: 20px auto;
+  padding: 10px 24px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--accent-ink);
+  font-weight: 700;
+  cursor: pointer;
+}
+

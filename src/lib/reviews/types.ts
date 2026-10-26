@@ -22,4 +22,3 @@ export type ReviewsResponse = {
   reviewCount: number;
   reviews: PlaceReview[];
 };
-

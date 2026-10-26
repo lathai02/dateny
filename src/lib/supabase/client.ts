@@ -7,4 +7,3 @@ export function createClient() {
   }
   return createBrowserClient(supabaseUrl, supabasePublishableKey);
 }
-

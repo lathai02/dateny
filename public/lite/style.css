@@ -1,0 +1,37 @@
+/* Deliberately no CSS variables, grid, backdrop-filter or external fonts. */
+* { box-sizing: border-box; }
+body { margin: 0; background: #f4f7fc; color: #202631; font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+main { max-width: 720px; padding: 16px; margin: 0 auto; }
+header { padding: 8px 0; overflow: hidden; }
+header span { float: right; color: #526174; }
+.brand { display: inline-block; min-height: 44px; font-size: 22px; font-weight: bold; }
+h1 { font-size: 28px; line-height: 1.2; }
+h2 { font-size: 20px; margin: 0 0 8px; word-wrap: break-word; }
+p { color: #4d596b; }
+a { color: #1d54bd; }
+nav { display: flex; margin: 20px -3px; }
+nav a { display: block; flex: 1; padding: 10px 4px; min-height: 44px; margin: 0 3px; text-align: center; border: 1px solid #c5cfe2; border-radius: 12px; text-decoration: none; }
+nav a[aria-current] { background: #1d54bd; border-color: #1d54bd; color: white; }
+.panel, article { padding: 16px; margin-bottom: 12px; background: #fff; border: 1px solid #dce2eb; border-radius: 16px; }
+button, input, select { font: inherit; min-height: 44px; border-radius: 10px; }
+button { cursor: pointer; border: 1px solid #1d54bd; background: #1d54bd; color: #fff; padding: 10px 14px; margin: 4px 4px 4px 0; }
+button:disabled { opacity: .6; }
+.secondary { background: #fff; color: #1d54bd; }
+input, select { padding: 8px; width: 100%; color: #202631; background: #fff; border: 1px solid #9caac1; }
+label { display: block; font-size: 14px; font-weight: bold; }
+.filter-row { display: flex; margin: 12px -4px; }
+.filter-row label { width: 50%; padding: 0 4px; }
+article a { display: inline-block; padding: 10px 0; min-height: 44px; }
+article p { margin: 6px 0; word-wrap: break-word; }
+footer { margin-top: 24px; font-size: 13px; }
+footer a { display: inline-block; min-height: 44px; padding: 10px 0; }
+:focus { outline: 3px solid #7358d8; outline-offset: 2px; }
+[hidden] { display: none !important; }
+body.couple { background: #fff5f7; }
+body.couple button, body.couple nav a[aria-current] { background: #ad3156; border-color: #ad3156; }
+body.couple a { color: #ad3156; }
+body.friends { background: #f7f3ff; }
+body.friends button, body.friends nav a[aria-current] { background: #5c43bb; border-color: #5c43bb; }
+body.friends a { color: #5c43bb; }
+body nav a[aria-current] { color: #fff; }
+body .secondary, body.couple .secondary, body.friends .secondary { background: white; color: #202631; }

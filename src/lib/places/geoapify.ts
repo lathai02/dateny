@@ -35,8 +35,12 @@ function consumeDailySafetyBudget() {
     requestsToday = 0;
   }
   const configured = Number(process.env.GEOAPIFY_DAILY_REQUEST_LIMIT);
-  const limit = Number.isInteger(configured) && configured > 0 ? configured : DEFAULT_DAILY_SAFETY_LIMIT;
-  if (requestsToday >= limit) throw new Error("Geoapify daily safety limit reached");
+  const limit =
+    Number.isInteger(configured) && configured > 0
+      ? configured
+      : DEFAULT_DAILY_SAFETY_LIMIT;
+  if (requestsToday >= limit)
+    throw new Error("Geoapify daily safety limit reached");
   requestsToday += 1;
 }
 
@@ -49,16 +53,28 @@ function safeWebsite(value: unknown): string | undefined {
   if (!raw) return undefined;
   try {
     const url = new URL(raw);
-    return url.protocol === "https:" || url.protocol === "http:" ? url.href : undefined;
+    return url.protocol === "https:" || url.protocol === "http:"
+      ? url.href
+      : undefined;
   } catch {
     return undefined;
   }
 }
 
-function categoryFrom(properties: Record<string, unknown>): PlaceCategory | undefined {
-  const categories = Array.isArray(properties.categories) ? properties.categories : [];
+function categoryFrom(
+  properties: Record<string, unknown>,
+): PlaceCategory | undefined {
+  const categories = Array.isArray(properties.categories)
+    ? properties.categories
+    : [];
   for (const category of PLACE_CATEGORIES) {
-    if (categories.some((value) => typeof value === "string" && value.startsWith(API_CATEGORIES[category]))) {
+    if (
+      categories.some(
+        (value) =>
+          typeof value === "string" &&
+          value.startsWith(API_CATEGORIES[category]),
+      )
+    ) {
       return category;
     }
   }
@@ -74,7 +90,10 @@ export function buildGeoapifyPlacesUrl(
   const url = new URL(process.env.GEOAPIFY_PLACES_URL || DEFAULT_ENDPOINT);
   const categories = category === "all" ? PLACE_CATEGORIES : [category];
   const point = `${center.longitude},${center.latitude}`;
-  url.searchParams.set("categories", categories.map((item) => API_CATEGORIES[item]).join(","));
+  url.searchParams.set(
+    "categories",
+    categories.map((item) => API_CATEGORIES[item]).join(","),
+  );
   url.searchParams.set("conditions", "named");
   url.searchParams.set("filter", `circle:${point},${radiusMeters}`);
   url.searchParams.set("bias", `proximity:${point}`);
@@ -90,15 +109,22 @@ export function normalizeGeoapifyPlaces(
   radiusMeters: number,
   categoryFilter: PlaceCategoryFilter,
 ): Place[] {
-  if (!Array.isArray(payload.features)) throw new Error("Invalid Geoapify response");
+  if (!Array.isArray(payload.features))
+    throw new Error("Invalid Geoapify response");
   const places: Place[] = [];
   const seen = new Set<string>();
 
   for (const feature of payload.features as GeoapifyFeature[]) {
-    if (!feature || typeof feature !== "object" || feature.geometry?.type !== "Point") continue;
+    if (
+      !feature ||
+      typeof feature !== "object" ||
+      feature.geometry?.type !== "Point"
+    )
+      continue;
     const properties = feature.properties;
     const point = feature.geometry.coordinates;
-    if (!properties || typeof properties !== "object" || !Array.isArray(point)) continue;
+    if (!properties || typeof properties !== "object" || !Array.isArray(point))
+      continue;
     const [longitude, latitude] = point;
     if (typeof latitude !== "number" || typeof longitude !== "number") continue;
     if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) continue;
@@ -112,13 +138,22 @@ export function normalizeGeoapifyPlaces(
     const distanceMeters = distanceInMeters(center, { latitude, longitude });
     if (distanceMeters > radiusMeters) continue;
 
-    const datasource = properties.datasource && typeof properties.datasource === "object"
-      ? properties.datasource as Record<string, unknown> : {};
-    const raw = datasource.raw && typeof datasource.raw === "object"
-      ? datasource.raw as Record<string, unknown> : {};
-    const addressParts = [nonEmpty(properties.address_line1), nonEmpty(properties.address_line2)]
-      .filter(Boolean).join(", ");
-    const address = nonEmpty(properties.formatted) ?? (addressParts || undefined);
+    const datasource =
+      properties.datasource && typeof properties.datasource === "object"
+        ? (properties.datasource as Record<string, unknown>)
+        : {};
+    const raw =
+      datasource.raw && typeof datasource.raw === "object"
+        ? (datasource.raw as Record<string, unknown>)
+        : {};
+    const addressParts = [
+      nonEmpty(properties.address_line1),
+      nonEmpty(properties.address_line2),
+    ]
+      .filter(Boolean)
+      .join(", ");
+    const address =
+      nonEmpty(properties.formatted) ?? (addressParts || undefined);
     const cuisine = nonEmpty(raw.cuisine);
     const openingHours = nonEmpty(raw.opening_hours);
     const website = safeWebsite(raw.website ?? raw["contact:website"]);
@@ -149,15 +184,25 @@ export async function queryGeoapify(
   const apiKey = process.env.GEOAPIFY_API_KEY?.trim();
   if (!apiKey) throw new Error("Geoapify API key is not configured");
   consumeDailySafetyBudget();
-  const response = await fetch(buildGeoapifyPlacesUrl(center, radiusMeters, category, apiKey), {
-    headers: { Accept: "application/json" },
-    signal: AbortSignal.timeout(TIMEOUT_MS),
-    cache: "no-store",
-  });
+  const response = await fetch(
+    buildGeoapifyPlacesUrl(center, radiusMeters, category, apiKey),
+    {
+      headers: { Accept: "application/json" },
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+      cache: "no-store",
+    },
+  );
   if (!response.ok) throw new Error(`Geoapify returned ${response.status}`);
   const declaredLength = Number(response.headers.get("content-length"));
-  if (declaredLength > MAX_RESPONSE_BYTES) throw new Error("Geoapify response too large");
+  if (declaredLength > MAX_RESPONSE_BYTES)
+    throw new Error("Geoapify response too large");
   const body = await response.text();
-  if (body.length > MAX_RESPONSE_BYTES) throw new Error("Geoapify response too large");
-  return normalizeGeoapifyPlaces(JSON.parse(body) as GeoapifyResponse, center, radiusMeters, category);
+  if (body.length > MAX_RESPONSE_BYTES)
+    throw new Error("Geoapify response too large");
+  return normalizeGeoapifyPlaces(
+    JSON.parse(body) as GeoapifyResponse,
+    center,
+    radiusMeters,
+    category,
+  );
 }

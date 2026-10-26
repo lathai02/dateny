@@ -1,7 +1,12 @@
 import { notFound } from "next/navigation";
-import Home, { type Mode } from "@/app/page";
+import DiscoveryScreen from "@/features/discovery/discovery-screen";
+import type { Mode } from "@/features/discovery/config";
 
 const validModes: Mode[] = ["solo", "couple", "friends"];
+
+export function generateStaticParams() {
+  return validModes.map((mode) => ({ mode }));
+}
 
 export default async function SuggestionsPage({
   params,
@@ -14,5 +19,5 @@ export default async function SuggestionsPage({
     notFound();
   }
 
-  return <Home initialMode={mode as Mode} />;
+  return <DiscoveryScreen initialMode={mode as Mode} />;
 }

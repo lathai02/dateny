@@ -4,5 +4,6 @@ export const supabasePublishableKey =
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
   "";
 
-export const isSupabaseConfigured = Boolean(supabaseUrl && supabasePublishableKey);
-
+export const isSupabaseConfigured = Boolean(
+  supabaseUrl && supabasePublishableKey,
+);
