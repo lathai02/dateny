@@ -87,6 +87,7 @@ button:disabled { cursor: not-allowed; }
 .welcome-location-alert strong { font-size: 13px; line-height: 1.2; }
 .welcome-location-alert small { color: #4e5968; font-size: 11px; line-height: 1.35; }
 .welcome-location-alert .ui-button { flex: none; padding: 0 14px; font-size: 12px; }
+.welcome-location-alert .native-geolocation-control { min-width: 0; flex: none; margin-top: 0; }
 .welcome-heading { max-width: 620px; animation: enter-up .45s var(--ease-out) both; }
 .overline { width: fit-content; min-height: 28px; display: inline-flex; align-items: center; padding: 0 10px; border: 1px solid color-mix(in srgb, var(--accent) 14%, transparent); border-radius: 999px; background: color-mix(in srgb, var(--accent-soft) 76%, rgba(255,255,255,.7)); color: var(--accent-ink); font-size: 12px; line-height: 1; font-weight: 720; letter-spacing: 0; text-transform: none; box-shadow: inset 0 1px rgba(255,255,255,.8); transition: color .45s ease, background-color .45s ease; }
 .welcome-typing-message { color: #202124; font-size: clamp(34px, 8.5vw, 52px); line-height: 1.07; letter-spacing: -.055em; font-weight: 740; }
@@ -141,7 +142,7 @@ button:disabled { cursor: not-allowed; }
 .gate-content h1 { margin: 12px 0 10px; font-size: clamp(27px, 7vw, 36px); line-height: 1.12; letter-spacing: -.045em; }
 .gate-content p { max-width: 360px; margin: 0; color: var(--muted); font-size: 14px; line-height: 1.5; }
 .gate-retry { min-height: 48px; margin-top: 24px; padding: 0 20px; font-size: 13px; }
-.native-geolocation-control { min-width: 190px; min-height: 48px; display: inline-block; margin-top: 24px; color: var(--accent-ink); font: inherit; font-size: 13px; font-weight: 750; color-scheme: light; }
+.native-geolocation-control { min-width: 190px; min-height: 48px; display: inline-grid; place-items: center; margin-top: 24px; padding: 3px; border: 1px solid var(--accent); border-radius: 999px; background: color-mix(in srgb, var(--accent) 6%, transparent); color: var(--accent-ink); font: inherit; font-size: 13px; font-weight: 750; color-scheme: light; }
 .native-geolocation-control > button { min-width: 190px; min-height: 48px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 0 20px; border: 0; border-radius: 999px; background: var(--accent); color: #fff; cursor: pointer; font: inherit; font-size: 13px; font-weight: 750; }
 .location-empty .native-geolocation-control { margin-top: 0; }
 
@@ -457,19 +458,6 @@ button:disabled { cursor: not-allowed; }
 .provider-facebook { background: #1877f2; color: #fff; font-family: Arial, sans-serif; }
 .auth-error, .auth-dialog .auth-error { margin-top: 12px; color: #a42b45; }
 .auth-setup-note code, .reviews-setup code { padding: 2px 5px; border-radius: 5px; background: #edf0f5; color: #363b45; }
-.location-permission-backdrop { z-index: 80; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(7px) saturate(120%); -webkit-backdrop-filter: blur(7px) saturate(120%); }
-.location-permission-dialog { width: min(100%, 430px); position: relative; padding: 28px; border: 1px solid rgba(255,255,255,.92); border-bottom-color: rgba(130,140,160,.24); border-radius: 29px; background: rgba(255,255,255,.94); box-shadow: 0 30px 80px rgba(17,27,45,.25), 0 5px 15px rgba(17,27,45,.1), inset 0 1px rgba(255,255,255,.98); animation: dialog-in .42s var(--ease-out) both; }
-.location-permission-dialog .modal-close { top: 18px; right: 18px; background: #eef1f5; }
-.location-permission-dialog h2 { margin: 18px 50px 8px 0; font-size: 29px; line-height: 1.1; letter-spacing: -.045em; }
-.location-permission-actions { display: grid; grid-template-columns: 1fr; gap: 9px; margin-top: 22px; }
-.location-permission-primary { padding: 3px; border: 1px solid #2463e8; border-radius: 999px; background: rgba(36,99,232,.06); }
-.location-permission-actions .native-geolocation-control { width: 100%; margin: 0; }
-.location-permission-actions .native-geolocation-control > button { width: 100%; border-color: transparent; background: var(--accent); color: #fff; }
-.location-permission-actions button { min-height: 50px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 0 18px; border: 1px solid var(--line); border-radius: 999px; background: #fff; color: var(--ink); cursor: pointer; font: inherit; font-size: 13px; font-weight: 750; transition: transform .22s var(--spring), background-color .2s; }
-.location-permission-actions button.primary { border-color: transparent; background: var(--accent); color: #fff; }
-.location-permission-actions button:hover { transform: translateY(-2px); }
-.location-permission-actions button:active { transform: scale(.97); transition-duration: .13s; }
-
 .reviews-section { margin-top: 18px; padding-top: 16px; border-top: 1px solid rgba(211,216,225,.82); }
 .reviews-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .reviews-heading .overline { display: none; }

@@ -223,7 +223,14 @@ function TypingWelcomeMessage() {
   );
 }
 
-function ModeWelcome({ location, onRetryLocation }: { location: LocationState; onRetryLocation: () => void }) {
+function ModeWelcome({
+  location, onPosition, onError, onFallback,
+}: {
+  location: LocationState;
+  onPosition: (position: GeolocationPosition) => void;
+  onError: (error: GeolocationPositionError) => void;
+  onFallback: () => void;
+}) {
   const modes = Object.entries(modeData) as [Mode, (typeof modeData)[Mode]][];
   const [previewMode, setPreviewMode] = useState<Mode>("solo");
   return (
@@ -235,7 +242,11 @@ function ModeWelcome({ location, onRetryLocation }: { location: LocationState; o
           <GlassPanel className="welcome-location-alert" role="alert">
             <MapPin size={20} aria-hidden="true" />
             <span><strong>{location.status === "denied" ? "Bật vị trí" : "Chưa lấy được vị trí"}</strong><small>{location.status === "denied" ? "Cho phép Vị trí trong quyền của trang, rồi thử lại." : location.message}</small></span>
-            <GlassButton variant="soft" onClick={onRetryLocation}>{location.status === "denied" ? "Cấp quyền vị trí" : "Thử lại"}</GlassButton>
+            {location.status === "denied" ? (
+              <GeolocationPermissionControl onPosition={onPosition} onError={onError} onFallback={onFallback} />
+            ) : (
+              <GlassButton variant="soft" onClick={onFallback}>Thử lại</GlassButton>
+            )}
           </GlassPanel>
         )}
         <div className="welcome-heading">
@@ -246,31 +257,6 @@ function ModeWelcome({ location, onRetryLocation }: { location: LocationState; o
         </div>
       </section>
     </main>
-  );
-}
-
-function LocationPermissionDialog({ open, onClose, onPosition, onError, onFallback }: {
-  open: boolean;
-  onClose: () => void;
-  onPosition: (position: GeolocationPosition) => void;
-  onError: (error: GeolocationPositionError) => void;
-  onFallback: () => void;
-}) {
-  if (!open) return null;
-  return (
-    <div className="modal-backdrop location-permission-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
-      <section className="location-permission-dialog" role="dialog" aria-modal="true" aria-labelledby="location-permission-title">
-        <button className="modal-close" onClick={onClose} aria-label="Đóng"><X size={20} aria-hidden="true" /></button>
-        <span className="auth-icon" aria-hidden="true"><MapPin size={25} /></span>
-        <h2 id="location-permission-title">Cho phép Dateny dùng vị trí?</h2>
-        <div className="location-permission-actions">
-          <div className="location-permission-primary">
-            <GeolocationPermissionControl onPosition={onPosition} onError={onError} onFallback={onFallback} />
-          </div>
-          <button onClick={onClose}>Để sau</button>
-        </div>
-      </section>
-    </div>
   );
 }
 
@@ -362,7 +348,6 @@ function PlaceCard({
 export default function Home({ initialMode = null }: { initialMode?: Mode | null }) {
   const isDesktopViewport = useSyncExternalStore(subscribeDesktopViewport, getDesktopViewport, getServerDesktopViewport);
   const [location, setLocation] = useState<LocationState>({ status: "idle", coordinates: null });
-  const [locationHelpOpen, setLocationHelpOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<PlaceCategoryFilter>("all");
   const [radiusMeters, setRadiusMeters] = useState(2_000);
@@ -393,7 +378,7 @@ export default function Home({ initialMode = null }: { initialMode?: Mode | null
     : "";
   const hasCoverage = Boolean(results && results.centerKey === centerKey && results.radiusMeters >= radiusMeters);
 
-  const requestLocation = useCallback((showHelpOnDenied = false) => {
+  const requestLocation = useCallback(() => {
     routeControllerRef.current?.abort();
     setRoutePlace(null);
     setRouteData(null);
@@ -410,7 +395,6 @@ export default function Home({ initialMode = null }: { initialMode?: Mode | null
     setLocation({ status: "loading", coordinates: null });
     navigator.geolocation.getCurrentPosition(
       ({ coords }) => {
-        setLocationHelpOpen(false);
         setLocation({
           status: "ready",
           coordinates: { latitude: coords.latitude, longitude: coords.longitude },
@@ -425,14 +409,12 @@ export default function Home({ initialMode = null }: { initialMode?: Mode | null
             ? "Quyền vị trí đang bị chặn. Bấm “Cấp quyền vị trí” để bật lại."
             : error.code === 3 ? "Hết thời gian lấy vị trí. Thử lại nhé." : "Không lấy được vị trí. Thử lại nhé.",
         });
-        if (denied && showHelpOnDenied) setLocationHelpOpen(true);
       },
       { enableHighAccuracy: false, timeout: 10_000, maximumAge: 5 * 60_000 },
     );
   }, []);
 
   const acceptBrowserLocation = useCallback((position: GeolocationPosition) => {
-    setLocationHelpOpen(false);
     setLocation({
       status: "ready",
       coordinates: { latitude: position.coords.latitude, longitude: position.coords.longitude },
@@ -553,17 +535,14 @@ export default function Home({ initialMode = null }: { initialMode?: Mode | null
   const visibleSelectedPlace = selectedPlace
     ? filteredPlaces.find((place) => place.id === selectedPlace.id) ?? null
     : null;
-  const locationPermissionDialog = (
-    <LocationPermissionDialog
-      open={locationHelpOpen}
-      onClose={() => setLocationHelpOpen(false)}
+  if (initialMode === null) return (
+    <ModeWelcome
+      location={location}
       onPosition={acceptBrowserLocation}
       onError={rejectBrowserLocation}
-      onFallback={() => requestLocation(false)}
+      onFallback={requestLocation}
     />
   );
-
-  if (initialMode === null) return <><ModeWelcome location={location} onRetryLocation={() => setLocationHelpOpen(true)} />{locationPermissionDialog}</>;
   const activeMode = modeData[initialMode];
   const ActiveIcon = activeMode.icon;
 
@@ -586,9 +565,11 @@ export default function Home({ initialMode = null }: { initialMode?: Mode | null
             <h1>{needsLocationPermission ? "Cần quyền vị trí" : hasError ? "Chưa tìm được quán" : findingLocation ? "Đang lấy vị trí…" : "Đang tìm quán…"}</h1>
             <p>{location.status === "idle" ? "Bấm nút bên dưới để chọn cấp quyền vị trí cho Dateny." : locationFailed ? location.message : loadFailed ? requestError : findingLocation ? "Đang chờ vị trí từ thiết bị của bạn." : "Một chút nhé, Dateny đang tìm quanh bạn."}</p>
             {needsLocationPermission ? (
-              <GlassButton variant="primary" className="gate-retry" onClick={() => setLocationHelpOpen(true)}>
-                <MapPin size={17} aria-hidden="true" /> Cấp quyền vị trí
-              </GlassButton>
+              <GeolocationPermissionControl
+                onPosition={acceptBrowserLocation}
+                onError={rejectBrowserLocation}
+                onFallback={requestLocation}
+              />
             ) : hasError && (
               <GlassButton variant="primary" className="gate-retry" onClick={() => { setRequestState("loading"); setRetryKey((current) => current + 1); }}>
                 <RotateCcw size={17} aria-hidden="true" /> Thử lại
@@ -596,7 +577,6 @@ export default function Home({ initialMode = null }: { initialMode?: Mode | null
             )}
           </section>
         </main>
-        {locationPermissionDialog}
       </>
     );
   }
@@ -789,7 +769,7 @@ export default function Home({ initialMode = null }: { initialMode?: Mode | null
                 {!routePlace && <NearbyMap center={coordinates} places={filteredPlaces} selectedPlace={visibleSelectedPlace} route={null} onSelectPlace={(place) => focusPlace(place)} />}
                 <div className="map-floating-toolbar">
                   <span className="map-heading"><strong>Bản đồ</strong><small>{hasCoverage ? `${filteredPlaces.length} địa điểm` : "Đang tìm địa điểm"}</small></span>
-                  <GlassButton className="map-locate-button" onClick={() => requestLocation(true)} aria-label="Cập nhật vị trí của tôi">
+                  <GlassButton className="map-locate-button" onClick={requestLocation} aria-label="Cập nhật vị trí của tôi">
                     <MapPin size={18} aria-hidden="true" /><span>Vị trí</span>
                   </GlassButton>
                 </div>
@@ -848,7 +828,11 @@ export default function Home({ initialMode = null }: { initialMode?: Mode | null
           <div className="location-empty">
             <Navigation size={28} aria-hidden="true" />
             <p>Cho phép vị trí để xem quán thật gần bạn.</p>
-            <button onClick={() => setLocationHelpOpen(true)}>{location.status === "denied" ? "Cấp quyền vị trí" : "Tìm quán quanh tôi"}</button>
+            <GeolocationPermissionControl
+              onPosition={acceptBrowserLocation}
+              onError={rejectBrowserLocation}
+              onFallback={requestLocation}
+            />
           </div>
         )}
         {location.status === "loading" && <div className="location-empty" role="status"><span className="loading-dot" /><p>Đang xác định vị trí của bạn…</p></div>}
@@ -930,7 +914,6 @@ export default function Home({ initialMode = null }: { initialMode?: Mode | null
         {initialMode === "couple" && <button className="date-action date-action--mobile" onClick={() => setDateJackpotOpen(true)} disabled={!coordinates || !hasCoverage}><Sparkles size={19} aria-hidden="true" /><span>Cả buổi hẹn</span></button>}
       </div>
     </main>
-    {locationPermissionDialog}
     </>
   );
 }
