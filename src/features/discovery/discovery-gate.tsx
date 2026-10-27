@@ -25,6 +25,7 @@ export function DiscoveryGate({
 }) {
   const initialMode = mode;
   const activeMode = modeData[mode];
+  const ActiveModeIcon = activeMode.icon;
 
   const locationFailed =
     location.status === "denied" || location.status === "error";
@@ -45,7 +46,10 @@ export function DiscoveryGate({
               <span className="loading-dot" />
             )}
           </span>
-          <span className="overline">{activeMode.label}</span>
+          <span className="hero-mode gate-mode">
+            <ActiveModeIcon size={18} aria-hidden="true" />
+            {activeMode.label}
+          </span>
           <h1>
             {needsLocationPermission
               ? "Cần quyền vị trí"

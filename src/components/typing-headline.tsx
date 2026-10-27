@@ -3,7 +3,13 @@ import { useEffect, useState } from "react";
 import { modeData, type Mode } from "@/features/discovery/config";
 import { welcomeMessages } from "@/features/welcome/messages";
 import { randomItem } from "@/lib/format";
-function TypingHeadline({ text }: { text: string }) {
+function TypingHeadline({
+  text,
+  onComplete,
+}: {
+  text: string;
+  onComplete?: () => void;
+}) {
   const [visibleLength, setVisibleLength] = useState(0);
 
   useEffect(() => {
@@ -24,6 +30,10 @@ function TypingHeadline({ text }: { text: string }) {
     return () => window.clearTimeout(timer);
   }, [text, visibleLength]);
 
+  useEffect(() => {
+    if (visibleLength >= text.length) onComplete?.();
+  }, [onComplete, text.length, visibleLength]);
+
   return (
     <h1 className="hero-title-typing" aria-label={text}>
       <span aria-hidden="true" style={{ visibility: "hidden" }}>
@@ -41,7 +51,13 @@ function TypingHeadline({ text }: { text: string }) {
   );
 }
 
-export function RandomModeHeadline({ mode }: { mode: Mode }) {
+export function RandomModeHeadline({
+  mode,
+  onComplete,
+}: {
+  mode: Mode;
+  onComplete?: () => void;
+}) {
   const [text, setText] = useState("");
 
   useEffect(() => {
@@ -60,7 +76,61 @@ export function RandomModeHeadline({ mode }: { mode: Mode }) {
     );
   }
 
-  return <TypingHeadline key={text} text={text} />;
+  return <TypingHeadline key={text} text={text} onComplete={onComplete} />;
+}
+
+const heroSlogan = "Khỏi nghĩ lâu.\nĐể Dateny chọn giúp.";
+
+export function TypingHeroSlogan({
+  placeCount,
+  start,
+}: {
+  placeCount: number;
+  start: boolean;
+}) {
+  const [visibleLength, setVisibleLength] = useState(0);
+
+  useEffect(() => {
+    if (!start || visibleLength >= heroSlogan.length) return;
+    const reduceMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    const delay = reduceMotion ? 0 : visibleLength === 0 ? 160 : 42;
+    const timer = window.setTimeout(() => {
+      setVisibleLength(
+        reduceMotion
+          ? heroSlogan.length
+          : (length) => Math.min(heroSlogan.length, length + 1),
+      );
+    }, delay);
+
+    return () => window.clearTimeout(timer);
+  }, [start, visibleLength]);
+
+  return (
+    <aside
+      className="hero-slogan"
+      aria-label={`${placeCount} quán gần bạn. Để Dateny chọn giúp.`}
+    >
+      <p className="hero-slogan-count">
+        <strong>{placeCount}</strong>
+        <span>quán gần bạn</span>
+      </p>
+      <h2 className="hero-slogan-typing">
+        <span className="hero-slogan-placeholder" aria-hidden="true">
+          {heroSlogan}
+        </span>
+        {start && (
+          <span className="typing-visible" aria-hidden="true">
+            {heroSlogan.slice(0, visibleLength)}
+            {visibleLength < heroSlogan.length && (
+              <i className="typing-cursor" />
+            )}
+          </span>
+        )}
+      </h2>
+    </aside>
+  );
 }
 
 export function TypingWelcomeMessage() {

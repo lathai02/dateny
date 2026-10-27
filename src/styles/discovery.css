@@ -296,6 +296,18 @@
   line-height: 1.06;
   letter-spacing: -0.045em;
 }
+.hero-slogan-typing {
+  position: relative;
+  white-space: pre-line;
+}
+.hero-slogan-placeholder {
+  visibility: hidden;
+}
+.hero-slogan-typing .typing-visible {
+  position: absolute;
+  inset: 0;
+  white-space: pre-line;
+}
 .pick-button {
   position: fixed;
   z-index: 9;

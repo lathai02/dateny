@@ -21,7 +21,10 @@ import {
   GlassPanel,
   SegmentedControl,
 } from "@/components/design-system";
-import { RandomModeHeadline } from "@/components/typing-headline";
+import {
+  RandomModeHeadline,
+  TypingHeroSlogan,
+} from "@/components/typing-headline";
 import { DirectionsButton } from "@/components/directions-button";
 import type { NearbyMapProps } from "@/features/map/nearby-map";
 import { GeolocationPermissionControl } from "@/features/location/geolocation-control";
@@ -65,6 +68,32 @@ const PlaceDetails = dynamic(() => import("./place-details"), { ssr: false });
 const SurpriseDialog = dynamic(() => import("./surprise-dialog"), {
   ssr: false,
 });
+
+function SequencedHeroCopy({
+  mode,
+  placeCount,
+}: {
+  mode: Mode;
+  placeCount: number;
+}) {
+  const [headlineComplete, setHeadlineComplete] = useState(false);
+  const activeMode = modeData[mode];
+  const ActiveIcon = activeMode.icon;
+  const completeHeadline = useCallback(() => setHeadlineComplete(true), []);
+
+  return (
+    <>
+      <div className="hero-copy-main">
+        <span className="hero-mode">
+          <ActiveIcon size={18} aria-hidden="true" />
+          {activeMode.label}
+        </span>
+        <RandomModeHeadline mode={mode} onComplete={completeHeadline} />
+      </div>
+      <TypingHeroSlogan placeCount={placeCount} start={headlineComplete} />
+    </>
+  );
+}
 
 export default function DiscoveryScreen({
   initialMode,
@@ -154,8 +183,6 @@ export default function DiscoveryScreen({
   const visibleSelectedPlace = selectedPlace
     ? (filteredPlaces.find((place) => place.id === selectedPlace.id) ?? null)
     : null;
-  const activeMode = modeData[initialMode];
-  const ActiveIcon = activeMode.icon;
   const focusPlace = useCallback(
     (place: Place) => {
       closeDirections();
@@ -235,29 +262,11 @@ export default function DiscoveryScreen({
 
         <section className="hero-section">
           <div className="hero-copy">
-            <div className="hero-copy-main">
-              <span className="hero-mode">
-                <ActiveIcon size={18} aria-hidden="true" />
-                {activeMode.label}
-              </span>
-              <RandomModeHeadline key={initialMode} mode={initialMode} />
-            </div>
-            {
-              <aside
-                className="hero-slogan"
-                aria-label={`${surpriseBasePlaces.length} quán gần bạn. Để Dateny chọn giúp.`}
-              >
-                <p className="hero-slogan-count">
-                  <strong>{surpriseBasePlaces.length}</strong>
-                  <span>quán gần bạn</span>
-                </p>
-                <h2>
-                  Khỏi nghĩ lâu.
-                  <br />
-                  Để Dateny chọn giúp.
-                </h2>
-              </aside>
-            }
+            <SequencedHeroCopy
+              key={initialMode}
+              mode={initialMode}
+              placeCount={surpriseBasePlaces.length}
+            />
             <div className="hero-actions">
               <button
                 className="pick-button pick-button--desktop"

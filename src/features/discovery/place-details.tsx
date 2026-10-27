@@ -1,5 +1,5 @@
 "use client";
-import { MapPin, X } from "lucide-react";
+import { Coffee, MapPin, Store, Utensils, X } from "lucide-react";
 import { DirectionsButton } from "@/components/directions-button";
 import { PlaceReviews } from "@/features/reviews/place-reviews";
 import { useDialog } from "@/hooks/use-dialog";
@@ -16,6 +16,12 @@ export default function PlaceDetails({
   onDirections: (place: Place) => void;
 }) {
   const dialogRef = useDialog<HTMLElement>(onClose);
+  const CategoryIcon =
+    detailPlace.category === "cafe"
+      ? Coffee
+      : detailPlace.category === "fast_food"
+        ? Utensils
+        : Store;
   return (
     <div
       className="modal-backdrop"
@@ -39,15 +45,23 @@ export default function PlaceDetails({
           <X size={20} aria-hidden="true" />
         </button>
         <header className="place-detail-hero">
-          <span className="overline">
-            {categoryLabels[detailPlace.category]}
-          </span>
-          <h2 id="result-title">{detailPlace.name}</h2>
-          <div className="modal-meta">
-            <span>
-              <MapPin size={14} aria-hidden="true" />
-              {formatDistance(detailPlace.distanceMeters)}
+          <div className="place-detail-identity">
+            <span
+              className="place-detail-category-icon"
+              aria-label={categoryLabels[detailPlace.category]}
+              title={categoryLabels[detailPlace.category]}
+            >
+              <CategoryIcon size={21} aria-hidden="true" />
             </span>
+            <h2 id="result-title" title={detailPlace.name}>
+              {detailPlace.name}
+            </h2>
+            <div className="modal-meta">
+              <span>
+                <MapPin size={14} aria-hidden="true" />
+                {formatDistance(detailPlace.distanceMeters)}
+              </span>
+            </div>
           </div>
         </header>
         {(detailPlace.address ||

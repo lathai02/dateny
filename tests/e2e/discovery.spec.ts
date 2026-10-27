@@ -71,7 +71,14 @@ for (const viewport of viewports) {
       );
       await page.locator(".place-card .detail-button").click();
       await expect(page.getByRole("dialog")).toBeVisible();
+      await expect(page.locator(".place-detail-identity")).toBeVisible();
+      await expect(
+        page.locator(".place-detail-category-icon"),
+      ).toHaveAccessibleName(/Nhà hàng|Cà phê|Ăn nhanh/);
       await expect.poll(() => counts.reviews).toBe(1);
+      await page.screenshot({
+        path: `artifacts/after/place-details-${viewport.width}.png`,
+      });
       await page.keyboard.press("Escape");
       await expect(page.getByRole("dialog")).toHaveCount(0);
       await page.locator(".place-card .direction-link").click();
@@ -123,6 +130,39 @@ test("normal motion: tactile press and picker cancellation remain responsive", a
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(pick).toBeEnabled();
+});
+
+test("normal motion: hero slogan waits for the mode headline", async ({
+  page,
+  context,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await grantLocation(context);
+  await mockServices(page);
+  await page.goto("/goi-y/friends");
+
+  const headline = page.locator(".hero-title-typing");
+  const headlineTyping = headline.locator(".typing-visible");
+  const sloganTyping = page.locator(".hero-slogan-typing .typing-visible");
+  await expect(headline).toHaveAttribute("aria-label", /.+/);
+  const completeHeadline = await headline.getAttribute("aria-label");
+
+  expect(completeHeadline).toBeTruthy();
+  await expect(sloganTyping).toHaveCount(0);
+  await page.screenshot({
+    path: "artifacts/after/hero-sequence-waiting-1440.png",
+  });
+  await expect(headlineTyping).toHaveText(completeHeadline!, {
+    timeout: 5_000,
+  });
+  await expect(sloganTyping).toBeVisible();
+  await expect(sloganTyping).toHaveText(
+    "Khỏi nghĩ lâu.\nĐể Dateny chọn giúp.",
+    { timeout: 5_000 },
+  );
+  await page.screenshot({
+    path: "artifacts/after/hero-sequence-complete-1440.png",
+  });
 });
 
 test("random pick and date plan respect reduced motion; filters do not refetch", async ({
@@ -184,6 +224,7 @@ test("loading, API error retry and empty results", async ({
     await expect(
       page.getByRole("heading", { name: "Đang tìm quán…" }),
     ).toBeVisible();
+    await expect(page.locator(".gate-mode svg")).toBeVisible();
     await page.screenshot({
       path: `artifacts/after/loading-${viewport.width}.png`,
     });
