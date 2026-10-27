@@ -43,7 +43,16 @@ function Avatar({ review }: { review: PlaceReview }) {
   );
 }
 
-export function PlaceReviews({ place }: { place: Place }) {
+export function PlaceReviews({
+  place,
+  onSummaryChange,
+}: {
+  place: Place;
+  onSummaryChange?: (summary: {
+    averageRating: number | null;
+    reviewCount: number;
+  }) => void;
+}) {
   const { user, ready: authReady, supabase } = useAuth();
   const userId = user?.id;
   const requestRef = useRef<AbortController | null>(null);
@@ -79,6 +88,10 @@ export function PlaceReviews({ place }: { place: Place }) {
           "error" in payload ? payload.error : "Chưa tải được đánh giá.",
         );
       setData(payload);
+      onSummaryChange?.({
+        averageRating: payload.averageRating,
+        reviewCount: payload.reviewCount,
+      });
       const currentUserReview = payload.reviews.find((review) => review.isOwn);
       setRating(currentUserReview?.rating ?? 0);
       setBody(currentUserReview?.body ?? "");
@@ -86,7 +99,7 @@ export function PlaceReviews({ place }: { place: Place }) {
     } catch {
       if (!controller.signal.aborted) setLoadState("error");
     }
-  }, [place.id]);
+  }, [onSummaryChange, place.id]);
 
   useEffect(() => {
     if (!authReady) return;

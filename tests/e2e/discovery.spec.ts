@@ -73,9 +73,10 @@ for (const viewport of viewports) {
       await expect(page.getByRole("dialog")).toBeVisible();
       await expect(page.locator(".place-detail-identity")).toBeVisible();
       await expect(
-        page.locator(".place-detail-category-icon"),
+        page.locator(".place-detail-category-chip"),
       ).toHaveAccessibleName(/Nhà hàng|Cà phê|Ăn nhanh/);
       await expect.poll(() => counts.reviews).toBe(1);
+      await expect(page.locator(".place-detail-rating")).toHaveText("4.8");
       await page.screenshot({
         path: `artifacts/after/place-details-${viewport.width}.png`,
       });

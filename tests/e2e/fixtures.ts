@@ -98,7 +98,7 @@ export async function mockServices(page: Page) {
   await page.route("**/api/reviews?**", (route) => {
     counts.reviews++;
     return route.fulfill({
-      json: { enabled: true, averageRating: null, reviewCount: 0, reviews: [] },
+      json: { enabled: true, averageRating: 4.8, reviewCount: 5, reviews: [] },
     });
   });
   return counts;
